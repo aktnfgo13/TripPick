@@ -7,7 +7,7 @@ from pathlib import Path
 
 import zxingcpp
 from PIL import Image, ImageDraw
-from pleos_album import capture, find, screen, tap, tree
+from pleos_album import capture, find, input_event, screen, tap, tree
 
 
 def run():
@@ -65,5 +65,31 @@ def run():
     print("Form Factor Test screen traversal passed", flush=True)
 
 
+def compact_saved_trips():
+    """Run on a short parked display with enough saved trips to overflow the list."""
+
+    def rows():
+        return [
+            (n.get("text"), n.get("bounds"))
+            for n in tree().iter("node")
+            if n.get("text", "").startswith("다시 열기")
+        ]
+
+    tap("새 여행")
+    find("기존 여행")
+    area = next(n for n in tree().iter("node") if n.get("scrollable") == "true")
+    left, top, right, bottom = map(int, re.findall(r"\d+", area.get("bounds")))
+    x = str((left + right) // 2)
+    before = rows()
+    input_event("swipe", x, str(bottom - 30), x, str(top + 30), "500")
+    assert rows() != before
+    input_event("swipe", x, str(top + 30), x, str(bottom - 30), "500")
+    tap("기존 여행")
+    find("공유 앨범")
+
+
 if __name__ == "__main__":
-    run()
+    if os.getenv("TRIPPICK_TEST_COMPACT_SCROLL") == "1":
+        compact_saved_trips()
+    else:
+        run()
