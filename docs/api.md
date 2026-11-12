@@ -42,3 +42,18 @@
 |WebSocket T/events|동일 출처의 멤버 쿠키 인증. 커밋 revision 통지. 단절 시 REST 재조회|
 
 별도 계정 인증 시스템을 도입하기 전까지 claim과 join은 같은 라우트에서 다른 종류의 토큰을 소비한다. QR 발급·서버 조회 실패를 사용자에게 표시한다. 초대 회전·외부 공개 링크·전체 ZIP, 날짜 편집 및 여행 생성 요청 자체의 멱등 키는 최초 계약의 후속 항목이다.
+
+## 안정화·여행일지 계약
+T는 /api/v1/trips/{trip}이다. 복구·변경 요청은 기존 동일 출처 정책을 따른다.
+
+|경로|계약|
+|---|---|
+|POST T/recovery/issue|관리자 휴대폰 쿠키 필요. 응답 {tripId,code}, Cache-Control: no-store. 발급 시 이전 코드 만료|
+|POST T/recovery {code}|성공 시 같은 멤버의 새 HttpOnly 쿠키, 기존 관리자 쿠키와 차량 계정 연결 무효화. 15분에 5회 실패하면 429|
+|GET /api/v1/regions|17개 시·도 GeoJSON. geometry는 [경도,위도], properties.code는 시·도 코드|
+|GET T/journal|멤버 또는 여행 차량만 접근. {visits,links}. 사진 원본과 분리된 장소·방문 메타데이터|
+|POST T/visits|key,name,source,kind,observedAt(오프셋 포함),latitude,longitude 및 선택 사항 category,districtCode. NAVIGATION·LOCATION은 진행 중 여행 차량, MANUAL은 관리자, MOCK은 별도 테스트 설정이 필요|
+|PATCH T/visits/{id}|관리자. status=CONFIRMED 또는 EXCLUDED, 선택적으로 name,departureAt 지정|
+|PUT T/photos/{id}/place|관리자 또는 업로더. {visitId}로 연결 확인·변경. null이면 해제. 다른 여행의 방문은 422|
+
+복구 코드는 소지자 증명이다. 보관하지 않은 코드나 유출된 코드의 원래 소유자를 이메일로 식별할 수 없다. 기존 관리자 쿠키가 살아 있는 동안에 미리 발급해야 한다. 환경변수 TRIPPICK_RECOVERY_ENABLED=0은 발급·복구 엔드포인트만 비활성화한다. 일반 초대 QR에는 복구 정보가 들어가지 않는다.

@@ -52,6 +52,8 @@ def qr(label):
 def run():
     stamp = str(int(time.time()))
     name = "Trip" + stamp
+    if any(n.get("text") == "지도 닫기" for n in tree().iter("node")):
+        tap("지도 닫기")
     if any(n.get("text") == "새 여행" for n in tree().iter("node")):
         tap("새 여행")
     tap("android.widget.EditText", "class")
@@ -113,6 +115,35 @@ def run():
         first.get_by_role("button").click()
         expect(first.get_by_role("button")).to_have_text("좋아요 취소 1")
         print("Four isolated browser joins, uploads, sync OK", flush=True)
+        if os.getenv("TRIPPICK_TEST_JOURNAL") == "1":
+            tap("자동 기록 시작")
+            time.sleep(2)
+            page = pages[0]
+            page.get_by_role("button", name="여행 지도").click()
+            frame = page.frame_locator("iframe")
+            expect(frame.locator("#choices button")).to_have_count(17)
+            frame.get_by_text("방문 기록과 사진 편집").click()
+            frame.get_by_label("장소명").fill("통합검사 충남 장소")
+            frame.get_by_label("위도").fill("36.8")
+            frame.get_by_label("경도").fill("127.15")
+            frame.get_by_role("button", name="방문 등록").click()
+            option = frame.locator("#visit option").filter(
+                has_text="통합검사 충남 장소"
+            )
+            expect(option).to_have_count(1)
+            frame.locator("#visit").select_option(option.get_attribute("value"))
+            frame.get_by_role("button", name="장소 연결 저장").click()
+            frame.get_by_role("button", name="충청남도 1").click()
+            expect(frame.locator("#map circle")).to_have_count(1)
+            frame.locator("#map circle").click()
+            expect(frame.locator("#detail img")).to_have_count(1)
+            frame.get_by_role("button", name="확대").click()
+            expect(frame.locator("#map circle")).to_have_count(1)
+            page.get_by_role("button", name="지도 닫기").click()
+            print(
+                "Live recording requested; manual Chungnam fixture + photo link + map pin OK",
+                flush=True,
+            )
         pair = qr("계정 연결")
         pages[0].goto(pair)
         pages[0].get_by_text("연결 확인", exact=True).click()
@@ -145,6 +176,15 @@ def run():
             "Vehicle detail, same-member votes, restart, vehicle publish + 4 album downloads OK",
             flush=True,
         )
+        if os.getenv("TRIPPICK_TEST_JOURNAL") == "1":
+            tap("여행 지도")
+            time.sleep(2)
+            tap("충청남도 1")
+            tap("통합검사 충남 장소")
+            find("사진 1장", exact=False)
+            print(
+                "Pleos regional map, visit detail and shared photo verified", flush=True
+            )
         browser.close()
 
 

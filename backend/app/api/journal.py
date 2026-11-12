@@ -20,6 +20,7 @@ class Event(BaseModel):
     source: Literal["NAVIGATION", "LOCATION", "MANUAL", "MOCK"]
     kind: Literal["CANDIDATE", "ARRIVED", "CONFIRMED"]
     observedAt: datetime
+    category: str = Field("장소", min_length=1, max_length=40)
     districtCode: str | None = Field(None, pattern=r"^\d{5}$")
 
     @model_validator(mode="after")

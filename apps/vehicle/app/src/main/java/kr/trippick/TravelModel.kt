@@ -13,7 +13,7 @@ import org.json.JSONObject
 data class GalleryPhoto(val id: String, val uploader: String, val count: Int, val voted: Boolean)
 
 class TravelModel(app: Application) : AndroidViewModel(app) {
-    private val recorder=TripRecorder(app)
+    private val recorder = TripRecorder(app)
     private val sessions = VehicleSessions(app)
     val savedTrips
         get() = sessions.saved()
@@ -26,17 +26,23 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
 
     var recording by mutableStateOf(recorder.enabled(trip))
         private set
+
     var journalMessage by mutableStateOf("")
         private set
-    fun toggleRecording(){recorder.toggle(trip);recording=recorder.enabled(trip)}
-    fun observe(e:NavigationObservation){
-        val target=trip
-        val credential=token
-        val payload=recorder.observation(target,e) ?: return
+
+    fun toggleRecording() {
+        recorder.toggle(trip)
+        recording = recorder.enabled(trip)
+    }
+
+    fun observe(e: NavigationObservation) {
+        val target = trip
+        val credential = token
+        val payload = recorder.observation(target, e) ?: return
         viewModelScope.launch {
-            runCatching { api.request("/trips/"+target+"/visits",credential,"POST",payload) }
-                .onSuccess { journalMessage="방문 기록 저장" }
-                .onFailure { journalMessage="방문 저장 실패 · 수동 확인 가능" }
+            runCatching { api.request("/trips/" + target + "/visits", credential, "POST", payload) }
+                .onSuccess { journalMessage = "방문 기록 저장" }
+                .onFailure { journalMessage = "방문 저장 실패 · 수동 확인 가능" }
         }
     }
 
@@ -111,7 +117,8 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     private suspend fun restore() {
         loadedRevision = -1
         trip = sessions.current
-        recording=recorder.enabled(trip);journalMessage=""
+        recording = recorder.enabled(trip)
+        journalMessage = ""
         selected = sessions.selected
         qr = ""
         photos = emptyList()
@@ -159,6 +166,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         albumRevision = record.getInt("revision")
         title = info.getString("title")
         status = info.getString("state")
+        if (status != "ACTIVE" && recording) toggleRecording()
         role = info.optString("role")
         members = people.joinToString { it.getString("nickname") }
         actorId = member
@@ -199,7 +207,12 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     private var actorId = ""
 
     fun vote(p: GalleryPhoto) = run {
-        api.request(base + "/photos/" + p.id + "/vote", token, if (p.voted) "DELETE" else "PUT", expectedMember=actorId)
+        api.request(
+            base + "/photos/" + p.id + "/vote",
+            token,
+            if (p.voted) "DELETE" else "PUT",
+            expectedMember = actorId,
+        )
         refreshData()
     }
 

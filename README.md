@@ -46,3 +46,16 @@ docs/requirements.md, architecture.md, database.md, api.md는 목표 상태와 �
 
 ## 회귀 검증
 일반 단위 테스트 외에 tests/integration/pleos_album.py가 실제 공식 AVD의 UI Automator, QR 화면 캡처, 별도 Chrome 컨텍스트 4개를 사용한다. 별도 테스트 DB, SDK 포함 설치 앱, adb, Chrome과 tests/integration/requirements.txt가 필요하다. 테스트는 새 여행만 만들며 기존 데이터는 지우지 않는다. 서버/도메인 설정과 실측 결과는 docs/phase2-validation.md를 참조한다.
+
+## Phase 2.5·3 실행과 사용
+기존 서버 시작 명령이 003·004 추가 마이그레이션을 적용한다. SQLite 파일과 objects 디렉터리를 함께 보관한다. 저장소의 assets/maps도 서버와 함께 배포한다. 외부 지도 키는 필요하지 않다. Vite 개발 모드에서는 /api와 /journal을 같은 백엔드로 프록시한다.
+
+- 관리자 휴대폰에서 **관리자 소유권 복구 → 복구 코드 발급**을 누르고 여행 ID와 코드를 별도로 보관한다. 새 브라우저에서 웹 첫 화면의 복구 폼에 두 값을 입력한다. 사용한 코드는 소진되므로 필요하면 다시 발급한다.
+- ACTIVE 여행의 차량 화면에서 **자동 기록 시작**을 누른다. SDK가 연결되면 목적지 및 현재 위치를 요청한다. 일반 APK에서는 수동 기록과 지도·앨범을 사용한다. SDK를 사용할 수 없는 경우 관리자가 휴대폰 **여행 지도 → 방문 기록과 사진 편집**에서 장소를 등록하고 사진을 연결할 수 있다.
+- **여행 지도 → 시·도 → 장소**로 이동한다. 전국에서는 지역별 장소 수, 지역 상세에서는 해당 지역 핀과 목록을 제공한다. 모바일에서 장소 연결 후보를 확인하거나 변경·해제할 수 있다. 차량에서는 주행 제한이 해제된 상태에만 지도를 연다.
+- 테스트 SDK APK의 차량 API는 http://10.0.2.2:18081, QR 웹 주소는 https://trippick.test:19444 이다. 로컬 회귀 테스트의 Chrome이 이 호스트를 127.0.0.1로 매핑한다. 기존 Phase 2 APK 포트와 다르다. 실제 휴대폰에는 신뢰되는 HTTPS 개발 주소를 webOrigin으로 지정해 다시 빌드한다.
+
+    cd apps/vehicle
+    ./gradlew -PwithPleosSdk=true -PapiOrigin=http://10.0.2.2:18081 -PwebOrigin=https://trippick.test:19444 assembleDebug testDebugUnitTest
+
+기존 통합 테스트에 TRIPPICK_TEST_JOURNAL=1을 추가하면 충남 장소 등록·사진 연결·모바일 지도·차량 지도 검사를 실행한다. 현재 제공 범위, 경계 데이터 기준 연도 및 실측 제한은 docs/phase3-validation.md에 있다.

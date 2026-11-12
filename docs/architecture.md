@@ -7,3 +7,8 @@
 ## Phase 2 모듈
 backend/app/api는 여행·사진·앨범·이벤트별 인증과 HTTP 처리, services/images·upload·album_selection은 이미지 디코딩·저장 및 선정 규칙, repositories/gallery는 두 클라이언트가 공유하는 조회 모델, integrations/objects는 바이너리 저장을 담당한다. SQLite는 요청마다 별도 연결을 열고 FK를 활성화한다. 업로드 재시도는 회원별 요청 키로 기존 결과를 돌려주고 실패 시 새 객체를 정리한다. 표결은 복합 유일 키로 직렬화한다. 앨범을 교체할 때는 여행 검증, revision 검사, 항목·상태 변경을 같은 트랜잭션에서 처리한다.
 차량은 SafetyGate(공식 UX 제한), VehicleSessions(로컬 복원), TravelModel(화면 상태), VehicleApi(HTTP), VehicleMedia(인증된 미리보기와 QR), Gallery(선정·열람)로 구성한다. SDK 의존성은 전용 소스 세트에 둔다. 모바일은 초대·페어링(App), 실제 여행(TripRoom), 업로드 큐(UploadPanel), HTTP 및 전송 진행률(api.ts)로 나뉜다.
+
+## 여행 기록과 지도
+NaviHelper는 SDK 포함 Android 소스 세트의 NavigationAdapter 안에서만 사용한다. NavigationObservation에는 의미가 명시된 위도·경도, 이벤트 종류와 모의 여부가 있고 TripRecorder는 직전 목적지 식별자를 여행별 앱 저장소에 유지한다. 사용자가 자동 기록을 켠 여행의 전경 생명주기에서만 SDK를 연결한다. 주행 제한은 갤러리·지도 조작을 차단한다. 앱이 보이지 않게 되면 내비 리스너를 제거하고 서비스를 해제한다. 별도의 백그라운드 위치 권한이나 상시 서비스를 사용하지 않는다.
+서버의 visits 서비스는 목적지 설정을 후보로, 실제 도착 신호를 도착 확인으로 저장한다. 새 내비 정보가 사용자 확인·제외를 덮어쓰지 않는다. 좌표를 제공하지 않는 도착 응답은 직전 목적지 이름·주소 일치를 확인해 연결한다. 위치 응답만 있을 때는 후보로 남긴다. 여행 상태 전이는 이 서비스 밖에 있다. 사진의 선택적 EXIF 분류는 업로드 트랜잭션의 savepoint 안에 있어 디코딩 실패가 공유 흐름을 막지 않는다.
+서버의 regions 모듈이 시·도 판정을 담당한다. 모바일 SVG 렌더러와 차량 Compose Canvas는 같은 읽기 전용 GeoJSON 및 여행별 일지 API를 소비한다. 기기별 화면은 별개이며 지도 라이브러리와 지도 타일은 사용하지 않는다.

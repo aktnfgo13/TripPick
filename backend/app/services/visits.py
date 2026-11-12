@@ -21,8 +21,8 @@ def record_visit(db, trip, body):
     fingerprint = f"{body.name}:{body.latitude}:{body.longitude}"
     pid = str(uuid4())
     db.execute(
-        """INSERT OR IGNORE INTO places(id,trip_id,id_key,name,latitude,longitude,region_code,district_code)
-      VALUES(?,?,?,?,?,?,?,?)""",
+        """INSERT OR IGNORE INTO places(id,trip_id,id_key,name,latitude,longitude,region_code,district_code,category)
+      VALUES(?,?,?,?,?,?,?,?,?)""",
         (
             pid,
             trip,
@@ -32,6 +32,7 @@ def record_visit(db, trip, body):
             body.longitude,
             region_for(body.latitude, body.longitude),
             body.districtCode,
+            body.category,
         ),
     )
     pid = db.execute(

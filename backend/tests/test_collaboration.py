@@ -83,15 +83,28 @@ class Collaboration(unittest.TestCase):
                 self.assertEqual(
                     a.get(path + "/photos").json()["items"][0]["myVote"], 0
                 )
+                with ThreadPoolExecutor(4) as pool:
+                    replies = list(pool.map(lambda p: p.delete(url + "/vote"), people))
+                self.assertTrue(all(r.status_code == 200 for r in replies))
+                self.assertEqual(
+                    a.get(path + "/photos").json()["items"][0]["voteCount"], 0
+                )
                 selection = dict(
                     orderedPhotoIds=[photo], coverPhotoId=photo, expectedRevision=0
                 )
                 self.assertEqual(
                     b.put(path + "/album", json=selection).status_code, 403
                 )
-                self.assertEqual(
-                    car.put(path + "/album", json=selection).status_code, 200
-                )
+                with ThreadPoolExecutor(2) as pool:
+                    statuses = list(
+                        pool.map(
+                            lambda p: (
+                                p.put(path + "/album", json=selection).status_code
+                            ),
+                            [a, car],
+                        )
+                    )
+                self.assertEqual(sorted(statuses), [200, 409])
                 self.assertEqual(b.get(url + "/download").content, buf.getvalue())
                 self.assertEqual(
                     a.put(path + "/album", json=selection).status_code, 409
@@ -132,6 +145,14 @@ class Collaboration(unittest.TestCase):
                     )
                     ws.send_text("refresh")
                     self.assertGreater(ws.receive_json()["revision"], initial)
+                client.patch(path, json={"state": "ACTIVE"}).raise_for_status()
+                with client.websocket_connect(
+                    "wss://testserver" + path + "/events"
+                ) as ws:
+                    self.assertEqual(
+                        ws.receive_json()["revision"],
+                        client.get(path).json()["revision"],
+                    )
                 from app.repositories.database import connect
 
                 with closing(connect(app.state.db_path)) as db, db:

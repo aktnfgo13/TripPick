@@ -22,6 +22,14 @@ export type Album = {
   coverPhotoId: string | null;
   revision: number;
 };
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
 export async function api<T>(
   path: string,
   method = "GET",
@@ -32,11 +40,14 @@ export async function api<T>(
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: signal ? AbortSignal.any([signal,AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(12000)])
+      : AbortSignal.timeout(12000),
   });
   const data = await response.json();
   if (!response.ok)
-    throw new Error(
+    throw new ApiError(
+      response.status,
       typeof data.detail === "string"
         ? data.detail
         : "요청을 처리하지 못했습니다.",

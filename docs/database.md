@@ -23,3 +23,8 @@ Phase 1은 버전 1 기초 마이그레이션만 적용한다. 다음 버전부�
 
 ## Phase 2 적용 상태
 002_collaboration.sql은 users, trips, trip_members, vehicle_sessions, photos, photo_votes, albums, album_items를 추가한다. 이전 001과 로컬 객체 UUID는 그대로 사용한다. 실제 열 이름과 CHECK/UNIQUE/FK는 버전 SQL이 기준이다. 식별자는 서버 발급 UUID, 만료는 UTC epoch 초, 생성 시각은 SQLite UTC다. 차량·멤버·초대 토큰은 해시로 조회한다. trip_members의 role과 trips.owner_user_id는 claim 트랜잭션에서 함께 변경한다. 사진과 멤버·앨범 항목은 같은 여행의 복합 FK로 묶인다. 앨범 첫 항목이 표지이며 원본은 독립 객체다. 사진 촬영 GPS, 방문·분석·작업 큐·공개 공유 링크는 장기 계약에 남겨둔다.
+
+## 003·004 추가 마이그레이션
+003 owner_recovery는 여행당 SHA-256 해시 한 개, 실패 횟수, 제한 창 시작 시각을 보관한다. 재발급은 기존 행을 교체하며 성공하면 행을 소진하고 관리자 멤버의 세션 해시를 갱신한다.
+004 places, visits, photo_metadata, photo_place_links를 추가한다. 동일 여행의 (source가 포함된 event_key) 유일 제약이 중복 전달을 흡수한다. place와 visit, photo와 visit은 복합 FK로 여행을 격리한다. 사진 링크는 CANDIDATE / CONFIRMED / UNLINKED 중 하나이고 앨범 항목·투표와 별도다. 방문 상태는 CANDIDATE / ARRIVED / CONFIRMED / EXCLUDED다. 출발 근거가 없으면 departure_at은 NULL이다. UTC 오프셋이 확인된 촬영 시각만 UTC로 변환한다. 시·도 코드는 공개 경계로 산출하고 시군구 코드는 제공된 값만 저장한다.
+기존 원본 일괄 재분석은 실행하지 않는다. 이전 사진은 수동 분류 가능하다. 한 장소를 여러 번 방문하면 방문 ID는 다를 수 있으며 지도 핀은 place_id 기준으로 묶는다.
