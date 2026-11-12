@@ -18,7 +18,7 @@ def ready(path: Path) -> bool:
 
 
 def connect(path: Path):
-    db = sqlite3.connect(path, timeout=15)
+    db = sqlite3.connect(path, timeout=15, check_same_thread=False)
     db.row_factory = sqlite3.Row
     db.execute("PRAGMA foreign_keys=ON")
     return db

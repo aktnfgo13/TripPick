@@ -16,7 +16,7 @@ onMounted(refresh)
     <button v-if="state === 'offline'" @click="refresh">다시 연결</button>
   </main>
 </template>
-<style>
+<style scoped>
 body { margin:0; background:#f3f6f3; color:#183c35; font-family:system-ui,sans-serif }
 main { max-width:32rem; margin:15vh auto; padding:2rem }
 button { padding:.75rem 1rem; font:inherit }

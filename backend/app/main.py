@@ -5,6 +5,9 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 
+from fastapi.staticfiles import StaticFiles
+from .api import albums, events, photos, trips
+from .api.request_policy import RequestPolicy
 from .integrations.objects import LocalObjects
 from .repositories import database
 
@@ -21,15 +24,12 @@ def create_app(data_dir: Path) -> FastAPI:
         database.initialize(db_path)
         yield
 
-    api = FastAPI(title="TripPick", version="0.1.0", lifespan=lifespan)
+    api = FastAPI(title="TripPick", version="0.2.0", lifespan=lifespan)
     api.state.db_path = db_path
     api.state.secure_cookie = os.getenv("TRIPPICK_DEV_HTTP") != "1"
-    from .api.trips import router as trips
-    api.include_router(trips)
-    from .api.photos import router as photos
-    from .api.albums import router as albums
-    api.include_router(photos)
-    api.include_router(albums)
+    api.add_middleware(RequestPolicy)
+    for feature in (trips, photos, albums, events):
+        api.include_router(feature.router)
 
     @api.get("/api/v1/health")
     def health() -> dict[str, str]:
@@ -40,6 +40,9 @@ def create_app(data_dir: Path) -> FastAPI:
             pass
         raise HTTPException(503, "storage unavailable")
 
+    web_dir = os.getenv("TRIPPICK_WEB_DIST")
+    if web_dir:
+        api.mount("/", StaticFiles(directory=web_dir, html=True), name="mobile")
     return api
 
 

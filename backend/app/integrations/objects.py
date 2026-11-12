@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 class ObjectStore(Protocol):
     def put(self, data: bytes) -> UUID: ...
     def read(self, key: UUID) -> bytes: ...
+    def discard(self, key: UUID) -> None: ...
 
 
 class LocalObjects:
@@ -15,7 +16,15 @@ class LocalObjects:
 
     def put(self, data: bytes) -> UUID:
         key = uuid4()
-        (self.root / str(key)).write_bytes(data)
+        path = self.root / str(key)
+        try:
+            with path.open("xb") as stream:
+                stream.write(data)
+        except FileExistsError:
+            raise
+        except OSError:
+            path.unlink(missing_ok=True)
+            raise
         return key
 
     def read(self, key: UUID) -> bytes:
