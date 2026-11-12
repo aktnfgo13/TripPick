@@ -59,3 +59,7 @@ docs/requirements.md, architecture.md, database.md, api.md는 목표 상태와 �
     ./gradlew -PwithPleosSdk=true -PapiOrigin=http://10.0.2.2:18081 -PwebOrigin=https://trippick.test:19444 assembleDebug testDebugUnitTest
 
 기존 통합 테스트에 TRIPPICK_TEST_JOURNAL=1을 추가하면 충남 장소 등록·사진 연결·모바일 지도·차량 지도 검사를 실행한다. 현재 제공 범위, 경계 데이터 기준 연도 및 실측 제한은 docs/phase3-validation.md에 있다.
+
+## Phase 3.5 기준점
+
+최종 로컬 테스트 APK의 재부팅·앨범·지도·주행 제한 결과, 전용 AVD에서의 재현 방법과 화면 캡처는 [Phase 3.5 검증 보고서](docs/phase3_5-validation.md)에 있다.
