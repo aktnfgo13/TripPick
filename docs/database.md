@@ -20,3 +20,6 @@
 
 표지는 같은 앨범 항목만 참조한다. 방문은 사진 없이 생성 가능하다. 투표 행과 앨범 항목은 독립적으로 수정한다. 장소 연결 변경은 원본 키를 바꾸지 않는다. 인덱스는 visits(trip_id,occurred_at), photos(trip_id,taken_at,id), places(region_code), processing_jobs(state,retry_at)에 둔다. 투표 유일 인덱스는 사진별 집계에도 사용한다.
 Phase 1은 버전 1 기초 마이그레이션만 적용한다. 다음 버전부터 도메인 테이블을 도입한다. 기존 버전 SQL을 고치지 않고 순차 적용하며 백업 복제본에서 업그레이드·복원을 시험한다.
+
+## Phase 2 적용 상태
+002_collaboration.sql은 users, trips, trip_members, vehicle_sessions, photos, photo_votes, albums, album_items를 추가한다. 이전 001과 로컬 객체 UUID는 그대로 사용한다. 실제 열 이름과 CHECK/UNIQUE/FK는 버전 SQL이 기준이다. 식별자는 서버 발급 UUID, 만료는 UTC epoch 초, 생성 시각은 SQLite UTC다. 차량·멤버·초대 토큰은 해시로 조회한다. trip_members의 role과 trips.owner_user_id는 claim 트랜잭션에서 함께 변경한다. 사진과 멤버·앨범 항목은 같은 여행의 복합 FK로 묶인다. 앨범 첫 항목이 표지이며 원본은 독립 객체다. 사진 촬영 GPS, 방문·분석·작업 큐·공개 공유 링크는 장기 계약에 남겨둔다.

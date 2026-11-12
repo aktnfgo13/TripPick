@@ -6,3 +6,6 @@
 - 사용자 동의 후 작업용 Android API 34와 Build-Tools 34.0.0 설치. JDK 17.0.21 / Gradle 8.7 / AGP 8.5.2. 첫 빌드의 Java 8/Kotlin 17 타깃 충돌을 양쪽 17로 수정했다. assembleDebug와 testDebugUnitTest가 기본·Vehicle 2.3.2 포함 설정 모두 성공했다. 각 설정의 동일 시작 상태 단위 테스트 1건 통과. APK 둘 모두 디버그 서명을 검증했다.
 - 실제 연동: 웹/HTTP/SQLite/파일 저장, 공식 Vehicle AAR의 빌드 의존성 해결 및 패키징. 차량 상태는 미연결 안내이며 주행·위치 이벤트를 합성하지 않는다. 사용자 여행 데이터, R2, Supabase, WebSocket, NaviHelper 호출은 후속 단계다.
 - Pleos AVD, 화면 크기·분할·주행 제한·백그라운드 동작 및 모바일 실기기는 미실행. 다음 검증은 공식 이미지의 별도 약관 확인 후 APK 설치·기동, FormFactorConsole 검사다. 기본 환경 회귀 후 Phase 2를 별도 변경으로 시작한다.
+
+## Phase 1.5 및 Phase 2 • 2026-11-12
+공식 AVD 설치·기존 APK 검증, 협업 DB와 API, 모바일 참여·업로드, 차량 갤러리·선정 기능을 각각 커밋했다. 실기동 중 발견한 Android 공유 라이브러리 선언, SQLite 스레드 제약, 이미 열려 있는 탭의 QR 라우팅을 수정했다. 통합 결과와 실행 명령, 구조 자체 검토는 phase2-validation.md에 기록했다. 기존 Phase 0·1 Git 이력은 보존했다.
