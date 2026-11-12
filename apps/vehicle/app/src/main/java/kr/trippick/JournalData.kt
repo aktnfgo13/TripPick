@@ -24,6 +24,12 @@ data class Journal(
     val links: Map<String, List<String>>,
 )
 
+internal fun Journal.restoreRoute(region: String, place: String): Pair<String, String> {
+    if (regions.none { it.code == region }) return "" to ""
+    val validPlace = place.takeIf { id -> stops.any { it.place == id && it.region == region } }
+    return region to validPlace.orEmpty()
+}
+
 private fun rings(polygon: JSONArray): List<List<Point>> =
     (0 until polygon.length()).map { i ->
         val ring = polygon.getJSONArray(i)

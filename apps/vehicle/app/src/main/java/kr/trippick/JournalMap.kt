@@ -47,6 +47,9 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
     LaunchedEffect(trip, refresh) {
         runCatching { repository.load(trip, model.token) }
             .onSuccess {
+                val route = it.restoreRoute(region, place)
+                if (route.first != region) chooseRegion(route.first)
+                else if (route.second != place) choosePlace(route.second)
                 data = it
                 error = ""
             }

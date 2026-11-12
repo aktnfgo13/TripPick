@@ -12,6 +12,9 @@ import org.json.JSONObject
 
 data class GalleryPhoto(val id: String, val uploader: String, val count: Int, val voted: Boolean)
 
+internal fun restoredPhoto(selected: String, photos: List<GalleryPhoto>): String =
+    selected.takeIf { id -> photos.any { it.id == id } }.orEmpty()
+
 class TravelModel(app: Application) : AndroidViewModel(app) {
     private val recorder = TripRecorder(app)
     private val sessions = VehicleSessions(app)
@@ -115,6 +118,11 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun restore() {
+        loadSavedState()
+        refreshData()
+    }
+
+    private fun loadSavedState() {
         loadedRevision = -1
         trip = sessions.current
         recording = recorder.enabled(trip)
@@ -128,7 +136,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         actor = ""
         role = ""
         status = ""
-        refreshData()
+        actorId = ""
     }
 
     fun refresh() {
@@ -136,7 +144,17 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun refreshData() {
-        val info = api.request(base, token)
+        val info =
+            try {
+                api.request(base, token)
+            } catch (e: VehicleResponseError) {
+                if (e.status == 401 || e.status == 404) {
+                    sessions.leaveCurrent()
+                    loadSavedState()
+                    error("저장된 여행에 접근할 수 없습니다. 다른 여행을 열거나 새 여행을 시작하세요.")
+                }
+                throw e
+            }
         val revision = info.getInt("revision")
         if (loadedRevision == revision) return
         val names = info.getJSONArray("members")
@@ -171,6 +189,8 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         members = people.joinToString { it.getString("nickname") }
         actorId = member
         actor = people.firstOrNull { it.getString("id") == member }?.getString("nickname") ?: ""
+        val validSelection = restoredPhoto(selected, all)
+        if (validSelection != selected) select(validSelection)
         photos = all
         loadedRevision = revision
     }

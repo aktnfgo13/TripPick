@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
+internal class VehicleResponseError(val status: Int, detail: String) : Exception(detail)
+
 class VehicleApi {
     suspend fun request(
         path: String,
@@ -24,7 +26,7 @@ class VehicleApi {
                 conn.connectTimeout = 6000
                 conn.readTimeout = 8000
                 if (token.isNotBlank()) conn.setRequestProperty("Authorization", "Bearer " + token)
-                expectedMember?.let { conn.setRequestProperty("X-Expected-Member",it) }
+                expectedMember?.let { conn.setRequestProperty("X-Expected-Member", it) }
                 if (body != null) {
                     conn.doOutput = true
                     conn.setRequestProperty("Content-Type", "application/json")
@@ -32,12 +34,15 @@ class VehicleApi {
                 }
                 if (conn.responseCode !in 200..299) {
                     val detail = conn.errorStream?.bufferedReader()?.use { it.readText() }
-                    error(
+                    throw VehicleResponseError(
+                        conn.responseCode,
                         runCatching { JSONObject(detail ?: "{}").getString("detail") }
-                            .getOrDefault("HTTP ${conn.responseCode}")
+                            .getOrDefault("HTTP ${conn.responseCode}"),
                     )
                 }
                 conn.inputStream.bufferedReader().use { JSONObject(it.readText()) }
+            } catch (e: java.io.IOException) {
+                throw java.io.IOException("서버에 연결하지 못했습니다. 연결 상태를 확인하고 새로고침을 누르세요.", e)
             } finally {
                 conn.disconnect()
             }

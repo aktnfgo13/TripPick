@@ -7,6 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -102,7 +104,7 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
     Column(Modifier.fillMaxSize().padding(14.dp)) {
         Text(navStatus, style = MaterialTheme.typography.caption)
         if (model.error.isNotBlank()) Text(model.error, color = MaterialTheme.colors.error)
-        if (model.busy) LinearProgressIndicator()
+        Box(Modifier.height(4.dp)) { if (model.busy) LinearProgressIndicator() }
         if (model.trip.isBlank() || creating) {
             Text("TripPick", style = MaterialTheme.typography.h4)
             OutlinedTextField(name, { name = it }, label = { Text("여행 제목") }, singleLine = true)
@@ -115,17 +117,19 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
             ) {
                 Text("여행 생성")
             }
-            for ((id, label) in model.savedTrips) {
-                TextButton(
-                    onClick = {
-                        creating = false
-                        model.reopen(id)
+            Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (creating) TextButton(onClick = { creating = false }) { Text("기존 여행") }
+                for ((id, label) in model.savedTrips) {
+                    TextButton(
+                        onClick = {
+                            creating = false
+                            model.reopen(id)
+                        }
+                    ) {
+                        Text("다시 열기 · " + label)
                     }
-                ) {
-                    Text("다시 열기 · " + label)
                 }
             }
-            if (creating) TextButton(onClick = { creating = false }) { Text("기존 여행") }
         } else {
             Text(
                 model.title + " · " + model.status + " · 사진 " + model.photos.size + "장",

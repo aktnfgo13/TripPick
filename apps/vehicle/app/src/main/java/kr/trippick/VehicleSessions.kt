@@ -41,6 +41,17 @@ class VehicleSessions(context: Context) {
             .apply()
     }
 
+    fun leaveCurrent() {
+        prefs
+            .edit()
+            .remove("trip")
+            .remove("vehicleToken")
+            .remove("invite")
+            .remove("claim")
+            .remove("selected")
+            .apply()
+    }
+
     fun saveDetail(id: String) {
         prefs.edit().putString("selected", id).putString("detail/" + current, id).apply()
     }
