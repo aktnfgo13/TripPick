@@ -12,3 +12,6 @@ Mac 공식 이미지 저장소 XML 조회 성공. API 34 arm64, Emulator v2.1.0,
 기존 기본 APK와 Vehicle 2.3.2 포함 APK 각각 adb install -r 성공, am start -S -W Status ok (714ms / 437ms), 둘 모두 TripPick 및 차량 서비스 미연결 텍스트를 확인했다. 이 두 바이너리는 SDK 초기화를 호출하지 않는다.
 
 Phase 3-A: 공식 Maven NaviHelper 3.0.5 AAR와 navi-data 3.0.4 확인. NAVI_ROUTE 및 AAR의 service query 병합. Vehicle 2.3.2 유지. API 34 공식 AVD 설치·cold launch 535ms. SDK 실제 로그 onConnected → DESTINATION → LOCATION(각 조회 응답). 콜백 전달은 유효한 목적지·도착 여행의 증명이 아니다. 변경·도착 이벤트는 이 검사에서 관측되지 않았다. 앱 onStop 시 리스너 제거·release, 재진입 시 재연결한다.
+
+## Phase 3 생명주기 관측
+사용자가 ACTIVE 여행에서 기록을 켠 뒤 Virtual Console의 주행 제한 화면과 주차 복귀를 확인했다. 주행 전환 구간과 HOME 직후 3초 동안 새 이벤트는 관측되지 않았다. 강제 종료 후 프로세스가 없었고 AVD 재부팅 직후에도 앱은 자동 실행되지 않았다. 사용자가 다시 실행하면 진행 중 여행·기록 설정을 복원하고 NaviHelper가 연결됐다. 주행 내내 위치가 연속 수집되는지, 목적지 변경 및 실제 도착이 전달되는지는 확인하지 못했다.
