@@ -13,6 +13,7 @@ import org.json.JSONObject
 data class GalleryPhoto(val id: String, val uploader: String, val count: Int, val voted: Boolean)
 
 class TravelModel(app: Application) : AndroidViewModel(app) {
+    private val recorder=TripRecorder(app)
     private val sessions = VehicleSessions(app)
     val savedTrips
         get() = sessions.saved()
@@ -22,6 +23,22 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     private val mutex = Mutex()
     var trip by mutableStateOf(sessions.current)
         private set
+
+    var recording by mutableStateOf(recorder.enabled(trip))
+        private set
+    var journalMessage by mutableStateOf("")
+        private set
+    fun toggleRecording(){recorder.toggle(trip);recording=recorder.enabled(trip)}
+    fun observe(e:NavigationObservation){
+        val target=trip
+        val credential=token
+        val payload=recorder.observation(target,e) ?: return
+        viewModelScope.launch {
+            runCatching { api.request("/trips/"+target+"/visits",credential,"POST",payload) }
+                .onSuccess { journalMessage="방문 기록 저장" }
+                .onFailure { journalMessage="방문 저장 실패 · 수동 확인 가능" }
+        }
+    }
 
     val token
         get() = sessions.token
@@ -94,6 +111,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     private suspend fun restore() {
         loadedRevision = -1
         trip = sessions.current
+        recording=recorder.enabled(trip);journalMessage=""
         selected = sessions.selected
         qr = ""
         photos = emptyList()

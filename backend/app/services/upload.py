@@ -3,6 +3,8 @@ from uuid import uuid4
 
 from ..integrations.objects import ObjectStore
 from .images import thumbnail
+from .matching import classify_upload
+import logging
 
 
 class UploadConflict(Exception):
@@ -54,6 +56,14 @@ def save_photo(db, store: ObjectStore, trip, member, data, mime, idempotency_key
                 str(idempotency_key),
             ),
         )
+        db.execute("SAVEPOINT photo_classification")
+        try:
+            classify_upload(db,trip,photo,data)
+        except Exception:
+            db.execute("ROLLBACK TO photo_classification")
+            logging.getLogger(__name__).warning("Optional photo classification unavailable")
+        finally:
+            db.execute("RELEASE photo_classification")
         db.execute("UPDATE trips SET revision=revision+1 WHERE id=?", (trip,))
         db.commit()
     except Exception:

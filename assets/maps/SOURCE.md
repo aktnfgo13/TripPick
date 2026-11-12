@@ -1,0 +1,2 @@
+대한민국 시·도 17곳의 경계는 geoBoundaries gbOpen KOR ADM1(KOR-ADM1-68945753, 2021년 기준), 원자료 Natural Earth 1:10m, Public Domain이다. geoBoundaries 배포물은 CC BY 4.0. 원본 형상은 유지하고 표시용 한국어 이름과 현행 시·도 코드 속성을 추가했다. 측량·필지 판정용 정밀도는 제공하지 않는다. 2021년 이후 경계 변경(예: 군위군 대구 편입)은 반영되지 않는다.
+[메타데이터](https://www.geoboundaries.org/api/current/gbOpen/KOR/ADM1/) · [고정 원본](https://github.com/wmgeolab/geoBoundaries/blob/9469f09/releaseData/gbOpen/KOR/ADM1/geoBoundaries-KOR-ADM1.geojson) · [라이선스](https://creativecommons.org/licenses/by/4.0/)
