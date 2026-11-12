@@ -3,14 +3,20 @@ plugins {
     id("org.jetbrains.kotlin.android") version "1.9.24"
 }
 
+val withPleosSdk = providers.gradleProperty("withPleosSdk").orNull == "true"
 android {
+    useLibrary("android.car", false)
+    sourceSets["main"].java.srcDir(if (withPleosSdk) "src/pleos/java" else "src/base/java")
+    if (withPleosSdk) sourceSets["debug"].manifest.srcFile("src/pleosDebug/AndroidManifest.xml")
     namespace = "kr.trippick"
     compileSdk = 34
     defaultConfig {
         applicationId = "kr.trippick.vehicle"
         minSdk = 28
         targetSdk = 34
-        versionCode = 1
+        buildConfigField("String","API_ORIGIN","\""+providers.gradleProperty("apiOrigin").getOrElse("http://10.0.2.2:8000")+"\"")
+        buildConfigField("String","WEB_ORIGIN","\""+providers.gradleProperty("webOrigin").getOrElse("")+"\"")
+        versionCode = 2
         versionName = "0.1"
     }
     compileOptions {
@@ -18,7 +24,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 }
 
@@ -29,5 +35,7 @@ dependencies {
     if (providers.gradleProperty("withPleosSdk").orNull == "true") {
         implementation("ai.pleos.playground:Vehicle:2.3.2")
     }
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     testImplementation("junit:junit:4.13.2")
 }
