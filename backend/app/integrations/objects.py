@@ -20,3 +20,6 @@ class LocalObjects:
 
     def read(self, key: UUID) -> bytes:
         return (self.root / str(UUID(str(key)))).read_bytes()
+
+    def discard(self, key: UUID) -> None:
+        (self.root / str(UUID(str(key)))).unlink(missing_ok=True)
