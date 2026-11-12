@@ -10,3 +10,5 @@ Mac 공식 이미지 저장소 XML 조회 성공. API 34 arm64, Emulator v2.1.0,
 ## Phase 1.5 실측
 사용자가 42dot 약관에 동의한 뒤 공식 arm64 v2.1.0 시스템 이미지와 호스트 Emulator를 설치했다. SDK 도구를 표준 cmdline-tools/latest 위치로 배치한 뒤 기기 프로필 ID Pleos_Connect_v2_0로 TripPick_Pleos AVD를 생성했다. RAM 4096 MiB, host GPU, 별도 창 cold boot 14.2초. 부팅 중 ColorBuffer 경고가 있었으나 UI 트리와 스크린샷 생성에 성공했다.
 기존 기본 APK와 Vehicle 2.3.2 포함 APK 각각 adb install -r 성공, am start -S -W Status ok (714ms / 437ms), 둘 모두 TripPick 및 차량 서비스 미연결 텍스트를 확인했다. 이 두 바이너리는 SDK 초기화를 호출하지 않는다.
+
+Phase 3-A: 공식 Maven NaviHelper 3.0.5 AAR와 navi-data 3.0.4 확인. NAVI_ROUTE 및 AAR의 service query 병합. Vehicle 2.3.2 유지. API 34 공식 AVD 설치·cold launch 535ms. SDK 실제 로그 onConnected → DESTINATION → LOCATION(각 조회 응답). 콜백 전달은 유효한 목적지·도착 여행의 증명이 아니다. 변경·도착 이벤트는 이 검사에서 관측되지 않았다. 앱 onStop 시 리스너 제거·release, 재진입 시 재연결한다.

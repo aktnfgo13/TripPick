@@ -14,6 +14,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
+    private var nav:NavigationDataSource?=null
+    private var navStatus by mutableStateOf("내비 미연결")
     private var allowed by mutableStateOf(false)
     private var gate: SafetyGate? = null
     private var probe: SdkProbe? = null
@@ -23,7 +25,7 @@ class MainActivity : ComponentActivity() {
         probe = runCatching { SdkProbe(applicationContext) }.getOrNull()
         setContent {
             MaterialTheme {
-                if (allowed) VehicleRoom(viewModel())
+                if (allowed) VehicleRoom(viewModel(), navStatus)
                 else Box(Modifier.padding(32.dp)) { Text("TripPick · 주차 및 화면 사용 허용 상태를 기다립니다.") }
             }
         }
@@ -31,10 +33,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        nav=runCatching { NavigationAdapter(this,{navStatus=it},{ }).also { it.start() } }.getOrNull()
         gate = SafetyGate(this) { allowed = it }
     }
 
     override fun onStop() {
+        nav?.close();nav=null
         gate?.close()
         gate = null
         allowed = false
@@ -48,7 +52,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun VehicleRoom(model: TravelModel) {
+fun VehicleRoom(model: TravelModel, navStatus:String) {
     var name by remember { mutableStateOf("") }
     var creating by remember { mutableStateOf(false) }
     LaunchedEffect(model.trip) {
@@ -58,6 +62,7 @@ fun VehicleRoom(model: TravelModel) {
         }
     }
     Column(Modifier.fillMaxSize().padding(14.dp)) {
+        Text(navStatus,style=MaterialTheme.typography.caption)
         if (model.error.isNotBlank()) Text(model.error, color = MaterialTheme.colors.error)
         if (model.busy) LinearProgressIndicator()
         if (model.trip.isBlank() || creating) {

@@ -34,6 +34,7 @@ dependencies {
     implementation("androidx.compose.material:material:1.6.8")
     if (providers.gradleProperty("withPleosSdk").orNull == "true") {
         implementation("ai.pleos.playground:Vehicle:2.3.2")
+        implementation("ai.pleos.playground:NaviHelper:3.0.5")
     }
     implementation("com.google.zxing:core:3.5.3")
     implementation("io.coil-kt:coil-compose:2.6.0")
