@@ -6,3 +6,7 @@ macOS 27.0.1 arm64, Git 2.54, Python 3.14.6. 최초 PATH에 JDK, Gradle, npm, ad
 [화면 모델](https://document.pleos.ai/docs/pleos-only/vehicle-app-planning-guide/app-structure-screen-model)에 따라 회전·분할을 허용한다. [주행 제한](https://document.pleos.ai/docs/pleos-only/vehicle-app-developer-guide/driving-restriction-development-guide)에 따라 DO를 선언하지 않는다. 이후 CarUxRestrictionsManager의 초기 상태·변경·서비스 단절 시 조작 차단을 확인한다. 현재 차량 화면은 조작 없는 안내 화면이다.
 [폼 팩터 테스트](https://document.pleos.ai/docs/pleos-only/app-test-guide/form-factor-test-guide)는 별도 창의 Pleos AVD, Go 1.22+, adb, 포트 8095/8096이 필요하다. [등록 태그](https://document.pleos.ai/docs/pleos-only/app-registration-guide/app-tagging-guide) 및 카테고리 심사는 배포 전 확인한다. 차량 서비스 권한·실행 검증 결과가 없어 SDK 연동 및 배포 적합성은 미확정이다.
 Mac 공식 이미지 저장소 XML 조회 성공. API 34 arm64, Emulator v2.1.0, 압축 4,669,762,816바이트, 별도 42dot SDK 약관을 확인했다. 이미지는 설치하지 않았다. 공식 Maven의 Vehicle 2.3.2 POM은 HTTP 200으로 확인했다.
+
+## Phase 1.5 실측
+사용자가 42dot 약관에 동의한 뒤 공식 arm64 v2.1.0 시스템 이미지와 호스트 Emulator를 설치했다. SDK 도구를 표준 cmdline-tools/latest 위치로 배치한 뒤 기기 프로필 ID Pleos_Connect_v2_0로 TripPick_Pleos AVD를 생성했다. RAM 4096 MiB, host GPU, 별도 창 cold boot 14.2초. 부팅 중 ColorBuffer 경고가 있었으나 UI 트리와 스크린샷 생성에 성공했다.
+기존 기본 APK와 Vehicle 2.3.2 포함 APK 각각 adb install -r 성공, am start -S -W Status ok (714ms / 437ms), 둘 모두 TripPick 및 차량 서비스 미연결 텍스트를 확인했다. 이 두 바이너리는 SDK 초기화를 호출하지 않는다.
