@@ -1,0 +1,7 @@
+BEGIN IMMEDIATE;
+CREATE TABLE IF NOT EXISTS owner_recovery(
+ trip_id TEXT PRIMARY KEY REFERENCES trips(id), code_hash TEXT NOT NULL,
+ failures INTEGER NOT NULL DEFAULT 0, window_start INTEGER NOT NULL DEFAULT 0
+);
+INSERT OR IGNORE INTO schema_migrations(version) VALUES(3);
+COMMIT;

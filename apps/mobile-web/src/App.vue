@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { api } from "./api";
+import OwnerRecovery from "./OwnerRecovery.vue";
 import TripRoom from "./TripRoom.vue";
 import ServerStatus from "./ServerStatus.vue";
 const params = new URLSearchParams(location.hash.slice(1));
@@ -12,6 +13,7 @@ const id = ref(""),
   title = ref(""),
   error = ref(""),
   busy = ref(false);
+function recovered(tid:string){enter(tid);window.location.reload()}
 function enter(trip: string) {
   localStorage.setItem("trip", trip);
   history.replaceState(null, "", location.pathname);
@@ -67,7 +69,7 @@ onMounted(async () => {
       <label>닉네임 <input required maxlength="80" v-model="nickname" /></label
       ><button :disabled="busy || !title">여행 참여</button>
     </form>
-    <ServerStatus v-else />
+    <ServerStatus v-else /><OwnerRecovery v-if="!pair && !token" @recovered="recovered" />
   </main>
 </template>
 <style>

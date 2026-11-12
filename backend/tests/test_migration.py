@@ -33,7 +33,7 @@ class PhaseOneUpgrade(unittest.TestCase):
                     db.execute(
                         "SELECT version FROM schema_migrations ORDER BY version"
                     ).fetchall(),
-                    [(1,), (2,)],
+                    [(1,), (2,), (3,)],
                 )
                 self.assertEqual(db.execute("PRAGMA foreign_key_check").fetchall(), [])
             self.assertEqual(original.read_bytes(), b"phase one")

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { api, type Trip, type Photo, type Album } from "./api";
+import OwnerRecovery from "./OwnerRecovery.vue";
 import UploadPanel from "./UploadPanel.vue";
+const controller=new AbortController();
 const props = defineProps<{ id: string }>();
 const base = "/trips/" + props.id;
 const trip = ref<Trip>(),
@@ -28,17 +30,18 @@ async function refresh() {
   if (loading) return;
   loading = true;
   try {
-    const info = await api<Trip>(base),
+    const info = await api<Trip>(base,"GET",undefined,controller.signal),
       list: Photo[] = [];
+    if (trip.value?.revision === info.revision && !error.value) return;
     let cursor = "";
     do {
       const page = await api<{ items: Photo[]; nextCursor: string | null }>(
-        base + "/photos?cursor=" + cursor,
+        base + "/photos?cursor=" + cursor,"GET",undefined,controller.signal,
       );
       list.push(...page.items);
       cursor = page.nextCursor || "";
     } while (cursor);
-    album.value = await api<Album>(base + "/album");
+    album.value = await api<Album>(base + "/album","GET",undefined,controller.signal);
     photos.value = list;
     trip.value = info;
     error.value = "";
@@ -82,6 +85,11 @@ async function save() {
 onMounted(() => {
   refresh();
   timer = setInterval(refresh, 5000);
+  connectSocket();
+});
+let disposed=false;
+let retry:ReturnType<typeof setTimeout>;
+function connectSocket(){
   ws = new WebSocket(
     (location.protocol === "https:" ? "wss://" : "ws://") +
       location.host +
@@ -90,8 +98,11 @@ onMounted(() => {
       "/events",
   );
   ws.onmessage = refresh;
-});
+  ws.onopen = refresh;
+  ws.onclose = () => { if(!disposed) retry=setTimeout(connectSocket,2000) };
+}
 onUnmounted(() => {
+  disposed=true;controller.abort();clearTimeout(retry);
   clearInterval(timer);
   ws?.close();
 });
@@ -120,6 +131,7 @@ onUnmounted(() => {
         trip.state === "ACTIVE" ? "업로드 마감 · 검토 시작" : "업로드 다시 열기"
       }}
     </button>
+    <OwnerRecovery v-if="trip.role==='owner'" :owner-trip="id"/>
     <UploadPanel v-if="trip.state === 'ACTIVE'" :trip="id" @done="refresh" />
     <h2>여행 사진</h2>
     <label><input type="checkbox" v-model="mine" /> 내 업로드만</label>

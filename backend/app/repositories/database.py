@@ -8,8 +8,11 @@ BASELINE = Path(__file__).resolve().parents[2] / "migrations/001_foundation.sql"
 def initialize(path: Path) -> None:
     with closing(sqlite3.connect(path)) as db:
         db.executescript(BASELINE.read_text())
-        if not db.execute("SELECT 1 FROM schema_migrations WHERE version=2").fetchone():
-            db.executescript(BASELINE.with_name("002_collaboration.sql").read_text())
+        for migration in sorted(BASELINE.parent.glob("[0-9][0-9][0-9]_*.sql")):
+            version = int(migration.name[:3])
+            if not db.execute("SELECT 1 FROM schema_migrations WHERE version=?", (version,)).fetchone():
+                db.executescript(migration.read_text())
+
 
 
 def ready(path: Path) -> bool:

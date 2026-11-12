@@ -17,6 +17,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     val savedTrips
         get() = sessions.saved()
 
+    private var loadedRevision = -1
     private val api = VehicleApi()
     private val mutex = Mutex()
     var trip by mutableStateOf(sessions.current)
@@ -91,6 +92,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     }
 
     private suspend fun restore() {
+        loadedRevision = -1
         trip = sessions.current
         selected = sessions.selected
         qr = ""
@@ -110,6 +112,8 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
 
     private suspend fun refreshData() {
         val info = api.request(base, token)
+        val revision = info.getInt("revision")
+        if (loadedRevision == revision) return
         val names = info.getJSONArray("members")
         val member = info.optString("memberId")
         val people = (0 until names.length()).map { names.getJSONObject(it) }
@@ -142,6 +146,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         actorId = member
         actor = people.firstOrNull { it.getString("id") == member }?.getString("nickname") ?: ""
         photos = all
+        loadedRevision = revision
     }
 
     fun showQr(kind: String) = run {

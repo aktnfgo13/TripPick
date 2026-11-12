@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 
 from fastapi.staticfiles import StaticFiles
-from .api import albums, events, photos, trips
+from .api import albums, events, photos, recovery, trips
 from .api.request_policy import RequestPolicy
 from .integrations.objects import LocalObjects
 from .repositories import database
@@ -27,8 +27,9 @@ def create_app(data_dir: Path) -> FastAPI:
     api = FastAPI(title="TripPick", version="0.2.0", lifespan=lifespan)
     api.state.db_path = db_path
     api.state.secure_cookie = os.getenv("TRIPPICK_DEV_HTTP") != "1"
+    api.state.recovery_enabled = os.getenv("TRIPPICK_RECOVERY_ENABLED", "1") == "1"
     api.add_middleware(RequestPolicy)
-    for feature in (trips, photos, albums, events):
+    for feature in (trips, photos, albums, events, recovery):
         api.include_router(feature.router)
 
     @api.get("/api/v1/health")
