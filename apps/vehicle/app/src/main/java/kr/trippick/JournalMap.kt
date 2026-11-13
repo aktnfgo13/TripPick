@@ -49,7 +49,7 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
             .onSuccess {
                 val route = it.restoreRoute(region, place)
                 if (route.first != region) chooseRegion(route.first)
-                else if (route.second != place) choosePlace(route.second)
+                if (route.second != place) choosePlace(route.second)
                 data = it
                 error = ""
             }

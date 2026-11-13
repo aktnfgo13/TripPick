@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
-from ..services.regions import BOUNDARIES
+from ..services.regions import catalog, current_code, regions
 from ..services.visits import record_visit
 from .access import actor, changed, connection, fail
 
@@ -47,7 +47,15 @@ class Link(BaseModel):
 
 @router.get("/regions")
 def boundaries():
-    return FileResponse(BOUNDARIES, media_type="application/geo+json")
+    return JSONResponse(
+        {
+            "type": "FeatureCollection",
+            "features": regions(),
+            "effectiveFrom": catalog()["effectiveFrom"],
+            "boundaryVersion": catalog()["boundaryVersion"],
+        },
+        media_type="application/geo+json",
+    )
 
 
 @router.get("/trips/{trip}/journal")
@@ -61,6 +69,9 @@ def journal(trip: str, req: Request, db=Depends(connection)):
             (trip,),
         )
     ]
+    for entry in entries:
+        entry["stored_region_code"] = entry["region_code"]
+        entry["region_code"] = current_code(entry["region_code"])
     links = [
         dict(r)
         for r in db.execute(

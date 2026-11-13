@@ -58,6 +58,7 @@ function statuses(status) {
 function render() {
   const kept = data.visits.filter((v) => v.status !== "EXCLUDED");
   const places = Array.from(new Map(kept.map((v) => [v.place_id, v])).values());
+  region = features.find((f) => f.properties.predecessors?.includes(region))?.properties.code || region;
   if (region && !features.some((f) => f.properties.code === region))
     region = "";
   renderer.draw(region, places);
@@ -69,10 +70,12 @@ function render() {
     detail = $("detail");
   choices.replaceChildren();
   detail.replaceChildren();
+  $("region-search").hidden = !!region;
   if (!region) {
     for (const f of features) {
       const p = f.properties,
         n = places.filter((v) => v.region_code === p.code).length;
+      if (![p.name, ...(p.aliases || [])].some(name => name.includes($("query").value.trim()))) continue;
       choices.append(button(p.name + " " + n, () => choose(p.code)));
     }
     const unknown = places.filter((v) => !v.region_code);
@@ -192,6 +195,7 @@ async function load() {
   $("message").textContent = "";
   render();
 }
+$("query").oninput = render;
 $("home").onclick = () => choose("");
 $("plus").onclick = () => renderer?.zoom(0.7);
 $("minus").onclick = () => renderer?.zoom(1 / 0.7);

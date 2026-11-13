@@ -20,8 +20,11 @@ def check_reconnect(trip):
     listeners = subprocess.check_output(
         ["lsof", "-nP", "-a", "-p", str(pid), "-iTCP", "-sTCP:LISTEN", "-Fn"], text=True
     ).splitlines()
-    assert "uvicorn app.main:app --port 18081" in command
-    assert [line for line in listeners if line.startswith("n")] == ["n127.0.0.1:18081"]
+    port = int(os.getenv("TRIPPICK_TEST_API_PORT", "18081"))
+    assert f"uvicorn app.main:app --port {port}" in command
+    assert [line for line in listeners if line.startswith("n")] == [
+        f"n127.0.0.1:{port}"
+    ]
     claim = parse_qs(urlsplit(qr("소유권 QR")).fragment)["invite"][0]
     try:
         os.kill(pid, signal.SIGSTOP)
@@ -29,7 +32,9 @@ def check_reconnect(trip):
         find("서버에 연결하지 못했습니다.", exact=False)
         with sync_playwright() as pw:
             client = pw.request.new_context(
-                base_url="https://127.0.0.1:19444", ignore_https_errors=True
+                base_url="https://127.0.0.1:"
+                + str(int(os.getenv("TRIPPICK_TEST_TLS_PORT", "19444"))),
+                ignore_https_errors=True,
             )
             response = client.post(
                 "/api/v1/join", data={"token": claim, "nickname": "NetworkOwner"}

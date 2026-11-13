@@ -4,7 +4,7 @@ import org.json.JSONArray
 
 data class Point(val x: Double, val y: Double)
 
-data class Region(val code: String, val name: String, val rings: List<List<Point>>)
+data class Region(val code: String, val name: String, val rings: List<List<Point>>, val predecessors: List<String> = emptyList())
 
 data class Stop(
     val id: String,
@@ -25,9 +25,9 @@ data class Journal(
 )
 
 internal fun Journal.restoreRoute(region: String, place: String): Pair<String, String> {
-    if (regions.none { it.code == region }) return "" to ""
-    val validPlace = place.takeIf { id -> stops.any { it.place == id && it.region == region } }
-    return region to validPlace.orEmpty()
+    val active = regions.firstOrNull { it.code == region || region in it.predecessors }?.code ?: return "" to ""
+    val validPlace = place.takeIf { id -> stops.any { it.place == id && it.region == active } }
+    return active to validPlace.orEmpty()
 }
 
 private fun rings(polygon: JSONArray): List<List<Point>> =
@@ -70,6 +70,7 @@ class JournalData(private val api: VehicleApi = VehicleApi()) {
                                     (0 until coordinates.length()).flatMap {
                                         rings(coordinates.getJSONArray(it))
                                     },
+                                p.optJSONArray("predecessors")?.let { a -> (0 until a.length()).map(a::getString) }.orEmpty(),
                             )
                         }
                         .also { regions = it }

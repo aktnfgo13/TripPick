@@ -27,7 +27,7 @@ class Journal(TestCase):
         )
 
     def test_shared_regions_and_conflicting_metadata(self):
-        self.assertEqual(len(regions()), 17)
+        self.assertEqual(len(regions()), 16)
         self.assertEqual(region_for(36.35, 127.38), "30")
         self.assertEqual(region_for(36.8, 127.15), "44")
         self.assertEqual(region_for(36.64, 127.49), "43")
@@ -100,6 +100,18 @@ class Journal(TestCase):
                     c.get(path + "/journal").json()["links"][0]["status"], "CANDIDATE"
                 )
                 c.put(path + "/photos/p/place", json={"visitId": v}).raise_for_status()
+                # Older trips retain their stored codes and confirmed photo links.
+                with closing(connect(Path(root) / "trippick.sqlite3")) as db, db:
+                    db.execute(
+                        "UPDATE places SET region_code=CASE region_code WHEN '44' THEN '29' ELSE '46' END"
+                    )
+                migrated = c.get(path + "/journal").json()
+                self.assertEqual(
+                    {r["stored_region_code"] for r in migrated["visits"]}, {"29", "46"}
+                )
+                self.assertEqual({r["region_code"] for r in migrated["visits"]}, {"12"})
+                self.assertEqual(migrated["links"][0]["visit_id"], v)
+                self.assertEqual(migrated["links"][0]["status"], "CONFIRMED")
                 c.put(
                     path + "/photos/p/place", json={"visitId": None}
                 ).raise_for_status()

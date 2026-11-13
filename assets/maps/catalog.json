@@ -1,0 +1,14 @@
+{
+  "effectiveFrom": "2026-07-01",
+  "boundaryVersion": "geoBoundaries-KOR-ADM1-68945753-2021",
+  "changes": [
+    {
+      "code": "12",
+      "name": "전남광주통합특별시",
+      "aliases": ["광주특별시", "광주", "전남", "광주광역시", "전라남도"],
+      "predecessors": ["29", "46"],
+      "predecessorsValidThrough": "2026-06-30",
+      "geometry": "jeonnam-gwangju.geojson"
+    }
+  ]
+}

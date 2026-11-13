@@ -194,7 +194,15 @@ def run():
             page = pages[0]
             page.get_by_role("button", name="여행 지도").click()
             frame = page.frame_locator("iframe")
-            expect(frame.locator("#choices button")).to_have_count(17)
+            count = page.evaluate("async () => (await (await fetch('/api/v1/regions')).json()).features.length")
+            expect(frame.locator("#choices button")).to_have_count(count)
+            for alias in ("광주", "전남"):
+                frame.get_by_role("searchbox").fill(alias)
+                expect(frame.locator("#choices button")).to_have_count(1)
+                expect(frame.locator("#choices button")).to_contain_text(
+                    "전남광주통합특별시"
+                )
+            frame.get_by_role("searchbox").fill("")
             frame.get_by_text("방문 기록과 사진 편집").click()
             frame.get_by_label("장소명").fill("통합검사 충남 장소")
             frame.get_by_label("위도").fill("36.8")

@@ -3,20 +3,23 @@ package kr.trippick
 import android.car.Car
 import android.car.drivingstate.CarUxRestrictions
 import android.car.drivingstate.CarUxRestrictionsManager
-import android.content.Context
+import android.app.Activity
 import android.util.Log
 
-class SafetyGate(context: Context, val update: (Boolean) -> Unit) {
+class SafetyGate(context: Activity, val update: (Boolean) -> Unit) {
+    private val targetDisplay = context.windowManager.defaultDisplay.displayId
     private var closed = false
     private var manager: CarUxRestrictionsManager? = null
 
     private fun apply(rule: CarUxRestrictions?) {
-        if (!closed)
+        if (!closed) {
+            Log.i("TripPickUX", "display=$targetDisplay mask=${rule?.activeRestrictions} requiresDO=${rule?.isRequiresDistractionOptimization}")
             update(
                 rule != null &&
                     !rule.isRequiresDistractionOptimization &&
                     rule.activeRestrictions == CarUxRestrictions.UX_RESTRICTIONS_BASELINE
             )
+        }
     }
 
     private val car =

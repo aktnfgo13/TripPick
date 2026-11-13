@@ -10,7 +10,7 @@ CITIES = {
     "26": (129.08, 35.18),
     "27": (128.60, 35.87),
     "28": (126.71, 37.46),
-    "29": (126.91, 35.18),
+    "12": (126.85, 35.16),
     "30": (127.38, 36.35),
     "31": (129.31, 35.54),
     "36": (127.29, 36.48),
@@ -19,7 +19,6 @@ CITIES = {
     "43": (127.49, 36.64),
     "44": (127.15, 36.80),
     "52": (127.15, 35.82),
-    "46": (127.49, 34.95),
     "47": (128.73, 36.57),
     "48": (128.68, 35.23),
     "50": (126.53, 33.47),
@@ -46,7 +45,7 @@ def run():
                 const paths = [...svg.querySelectorAll('path')];
                 const point = new DOMPoint(p.longitude*.8,-p.latitude);
                 const hits = paths.filter(path => path.isPointInFill(point));
-                if(paths.length!==17 || hits.length!==1 || !hits[0].classList.contains('recorded')) return p.region_code;
+                if(paths.length!==Object.keys(cities).length || hits.length!==1 || !hits[0].classList.contains('recorded')) return p.region_code;
                 hits[0].dispatchEvent(new MouseEvent('click'));
                 if(selected !== p.region_code) return p.region_code;
                 map.draw(selected, places);
@@ -63,7 +62,7 @@ def run():
         assert result == "ok", result
         browser.close()
         print(
-            "17 real SVG district hit areas, regional filters and coordinate pins passed."
+            "Current SVG district hit areas, regional filters and coordinate pins passed."
         )
 
 
