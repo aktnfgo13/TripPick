@@ -58,6 +58,12 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
     var status by mutableStateOf("")
         private set
 
+    var memberCount by mutableIntStateOf(0)
+        private set
+    var cover by mutableStateOf("")
+        private set
+    var qrKind by mutableStateOf("")
+        private set
     var members by mutableStateOf("")
         private set
 
@@ -130,6 +136,8 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         selected = sessions.selected
         qr = ""
         photos = emptyList()
+        memberCount = 0
+        cover = ""
         album = emptyList()
         title = ""
         members = ""
@@ -181,11 +189,13 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
         val record = api.request(base + "/album", token)
         val ids = record.getJSONArray("orderedPhotoIds")
         album = (0 until ids.length()).map { ids.getString(it) }
+        cover = record.optString("coverPhotoId")
         albumRevision = record.getInt("revision")
         title = info.getString("title")
         status = info.getString("state")
         if (status != "ACTIVE" && recording) toggleRecording()
         role = info.optString("role")
+        memberCount = people.size
         members = people.joinToString { it.getString("nickname") }
         actorId = member
         actor = people.firstOrNull { it.getString("id") == member }?.getString("nickname") ?: ""
@@ -201,14 +211,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
             return@run
         }
         val origin = BuildConfig.WEB_ORIGIN.trimEnd('/')
-        val uri = android.net.Uri.parse(origin)
-        require(
-            uri.scheme == "https" &&
-                !uri.host.isNullOrEmpty() &&
-                uri.host !in listOf("localhost", "127.0.0.1", "10.0.2.2")
-        ) {
-            "휴대폰용 HTTPS webOrigin 설정 필요"
-        }
+        require(validPhoneOrigin(origin)) { "휴대폰용 HTTPS webOrigin 설정 필요" }
         val fragment =
             if (kind == "pair")
                 "trip=" +
@@ -216,6 +219,7 @@ class TravelModel(app: Application) : AndroidViewModel(app) {
                     "&pair=" +
                     api.request(base + "/pair-code", token, "POST").getString("token")
             else "invite=" + sessions.code(kind)
+        qrKind = kind
         qr = origin + "/#" + fragment
     }
 

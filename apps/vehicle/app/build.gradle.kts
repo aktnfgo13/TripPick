@@ -8,10 +8,12 @@ android {
     useLibrary("android.car", false)
     sourceSets["main"].java.srcDir(if (withPleosSdk) "src/pleos/java" else "src/base/java")
     if (withPleosSdk) sourceSets["debug"].manifest.srcFile("src/pleosDebug/AndroidManifest.xml")
+    if (withPleosSdk) sourceSets["release"].manifest.srcFile("src/pleos/AndroidManifest.xml")
     namespace = "kr.trippick"
     compileSdk = 34
     defaultConfig {
         applicationId = "kr.trippick.vehicle"
+        if (providers.gradleProperty("isolatedDemo").orNull == "true") applicationIdSuffix = ".demo"
         minSdk = 28
         targetSdk = 34
         buildConfigField("String","API_ORIGIN","\""+providers.gradleProperty("apiOrigin").getOrElse("http://10.0.2.2:8000")+"\"")

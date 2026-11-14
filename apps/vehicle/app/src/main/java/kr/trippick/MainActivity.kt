@@ -101,12 +101,33 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
         JournalMap(model) { openMap(false) }
         return
     }
+    if (model.qr.isNotBlank()) {
+        androidx.activity.compose.BackHandler { model.showQr("") }
+        Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(model.title, Modifier.weight(1f), style = MaterialTheme.typography.h6, maxLines = 1)
+                Button(onClick = { model.showQr("") }) { Text("QR 닫기") }
+            }
+            val instruction = when (model.qrKind) {
+                "claim" -> "관리자 휴대폰으로만 스캔하세요"
+                "pair" -> "참여한 휴대폰으로 차량 계정을 연결하세요"
+                else -> "휴대폰으로 스캔하여 참여하세요"
+            }
+            Text(instruction)
+            InviteQr(model.qr, Modifier.weight(1f).fillMaxWidth())
+            Text("참여자 ${model.memberCount}명 · " + if (model.error.isEmpty()) "최근 조회 정상" else "연결 확인 필요")
+            Text(model.qr, style = MaterialTheme.typography.caption)
+            if (model.qrKind == "invite") Text("참여 코드 " + model.qr.substringAfter("#invite="))
+        }
+        return
+    }
     Column(Modifier.fillMaxSize().padding(14.dp)) {
         Text(navStatus, style = MaterialTheme.typography.caption)
         if (model.error.isNotBlank()) Text(model.error, color = MaterialTheme.colors.error)
         Box(Modifier.height(4.dp)) { if (model.busy) LinearProgressIndicator() }
         if (model.trip.isBlank() || creating) {
             Text("TripPick", style = MaterialTheme.typography.h4)
+            Text("새 여행 시작", style = MaterialTheme.typography.h6)
             OutlinedTextField(name, { name = it }, label = { Text("여행 제목") }, singleLine = true)
             Button(
                 onClick = {
@@ -135,15 +156,16 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
                 model.title + " · " + model.status + " · 사진 " + model.photos.size + "장",
                 style = MaterialTheme.typography.h6,
             )
-            Text("참여자 " + model.members + " · 차량 계정 " + model.actor.ifBlank { "미연결" })
+            Text("참여자 ${model.memberCount}명 · " + model.members + " · 차량 계정 " + model.actor.ifBlank { "미연결" })
             if (model.status == "ACTIVE")
                 TextButton(onClick = { model.toggleRecording() }) {
                     Text(if (model.recording) "자동 기록 중단" else "자동 기록 시작")
                 }
-            if (model.journalMessage.isNotEmpty()) Text(model.journalMessage)
             Text("여행 ID " + model.trip, style = MaterialTheme.typography.caption)
+            if (model.journalMessage.isNotEmpty()) Text(model.journalMessage)
+
             FlowRow {
-                TextButton(onClick = { model.showQr("invite") }) { Text("참여 QR") }
+                Button(onClick = { model.showQr("invite") }, enabled = !model.busy) { Text("참여 QR") }
                 if (model.status == "DRAFT")
                     TextButton(onClick = { model.showQr("claim") }) { Text("소유권 QR") }
                 TextButton(onClick = { model.showQr("pair") }) { Text("계정 연결") }
@@ -153,10 +175,7 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
                 TextButton(onClick = { model.refresh() }) { Text("새로고침") }
                 TextButton(onClick = { creating = true }) { Text("새 여행") }
             }
-            if (model.qr.isNotBlank()) {
-                Button(onClick = { model.showQr("") }) { Text("QR 닫기") }
-                InviteQr(model.qr, Modifier.fillMaxHeight().aspectRatio(1f))
-            } else Gallery(model)
+            Gallery(model)
         }
     }
 }

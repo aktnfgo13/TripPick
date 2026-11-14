@@ -1,6 +1,12 @@
 # TripPick
 Pleos 차량에서 여행을 만들고 참여자는 휴대폰 웹에서 사진을 올린다. 같은 참여자로 차량·휴대폰에서 투표하고 관리자가 확정한 앨범을 휴대폰에서 내려받을 수 있다. Phase 0·1 기준점은 Git 이력에 보존되어 있다.
 
+## 공모전 시연 후보
+
+[시연 순서와 로컬 실행](docs/demo.md) · [외부 HTTPS 및 서명 준비](docs/release-checklist.md) · [이번 후보의 검증과 캡처](docs/ui-validation.md) · [제한 사항](docs/known-issues.md)
+
+차량 Kotlin/Compose는 apps/vehicle, 모바일 Vue는 apps/mobile-web, FastAPI는 backend에 있습니다. Vehicle SDK 2.3.2와 NaviHelper 3.0.5를 사용합니다.
+
 ## Phase 2 실행
 1. 아래 모바일 웹 절차로 npm ci, npm run build를 실행한다. 서버 터미널에서 backend 디렉터리로 이동해 의존성을 설치한다.
 2. 서버 시작 전에 `export TRIPPICK_WEB_DIST="$(cd ../apps/mobile-web/dist && pwd)"`를 설정하면 FastAPI가 모바일 배포 파일과 /api/v1을 한 출처에서 제공한다. DB와 파일은 TRIPPICK_DATA_DIR 아래에 보관한다. 서버 여러 개를 시작할 때는 동일한 절대 경로를 사용한다.

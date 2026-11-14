@@ -18,7 +18,7 @@ def adb(*args):
 
 
 DISPLAY = os.getenv("TRIPPICK_TEST_DISPLAY", "0")
-PACKAGE = "kr.trippick.vehicle"
+PACKAGE = os.getenv("TRIPPICK_TEST_PACKAGE", "kr.trippick.vehicle")
 
 
 def tree():
@@ -98,6 +98,8 @@ def qr(label):
     for _ in range(5):
         result = zxingcpp.read_barcode(Image.open(io.BytesIO(screen())))
         if result:
+            if not any(n.get("text") == result.text for n in tree().iter("node")):
+                raise AssertionError("QR payload differs from displayed address")
             tap("QR 닫기")
             find("전체 사진")
             return result.text
@@ -177,6 +179,8 @@ def run():
                 retry.click()
             expect(page.get_by_text(re.compile("100% · 완료"))).to_be_visible()
             pages.append(page)
+            if i == 3 and os.getenv("TRIPPICK_TEST_SCREENSHOTS"):
+                page.screenshot(path=str(Path(os.environ["TRIPPICK_TEST_SCREENSHOTS"]) / "mobile-gallery.png"))
         for p in pages:
             expect(p.locator(".grid").first.locator("article")).to_have_count(4)
         first = pages[0].locator(".grid").first.locator("article").first
@@ -248,7 +252,7 @@ def run():
             expect(
                 p.locator(".grid").first.locator("article").first.get_by_role("button")
             ).to_have_text("좋아요 1", timeout=15000)
-        adb("shell", "am", "force-stop", "kr.trippick.vehicle")
+        adb("shell", "am", "force-stop", PACKAGE)
         adb(
             "shell",
             "am",
@@ -257,7 +261,7 @@ def run():
             "--display",
             DISPLAY,
             "-n",
-            "kr.trippick.vehicle/kr.trippick.MainActivity",
+            PACKAGE + "/kr.trippick.MainActivity",
         )
         time.sleep(2)
         find("좋아요 취소 1")

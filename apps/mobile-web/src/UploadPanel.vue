@@ -53,10 +53,10 @@ onUnmounted(() => items.value.forEach((i) => URL.revokeObjectURL(i.url)));
         multiple
         @change="select"
     /></label>
-    <ul>
+    <ul aria-live="polite">
       <li v-for="i in items" :key="i.key">
         <img :src="i.url" width="56" alt="" /> {{ i.file.name }} ·
-        {{ i.progress }}% · {{ i.state }}
+        <progress :value="i.progress" max="100" aria-label="업로드 진행률"></progress> {{ i.progress }}% · {{ i.state }}
         <button
           v-if="!['완료', '전송 중', '대기'].includes(i.state)"
           @click="upload(i)"

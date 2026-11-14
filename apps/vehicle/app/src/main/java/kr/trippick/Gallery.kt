@@ -61,6 +61,10 @@ fun Gallery(model: TravelModel) {
     }
     val lookup = remember(model.photos) { model.photos.associateBy { it.id } }
     val photos = if (albumOnly) model.album.mapNotNull(lookup::get) else model.photos
+    if (albumOnly) {
+        Text(model.title + " · 공유 앨범 " + photos.size + "장", style = MaterialTheme.typography.h6)
+        Text("참여한 휴대폰의 공유 앨범에서 원본을 내려받으세요.")
+    } else Text("사진 고르기 · 전체 ${photos.size}장" + if (editing) " · 선정 ${picks.size}장" else "")
     if (photos.isEmpty()) Text(if (albumOnly) "확정한 앨범이 없습니다." else "업로드된 사진이 없습니다.")
     LazyVerticalGrid(GridCells.Adaptive(160.dp)) {
         items(photos, key = { it.id }) { p ->
@@ -72,7 +76,7 @@ fun Gallery(model: TravelModel) {
             ) {
                 Preview(model, p.id, Modifier.fillMaxWidth().height(110.dp))
                 Text(
-                    p.uploader + " · 좋아요 " + p.count + if (editing && p.id in picks) " · 선정" else ""
+                    p.uploader + " · 좋아요 " + p.count + (if (p.voted) " ♥" else "") + (if (editing && p.id in picks) " · 선정" else "") + (if (albumOnly && p.id == model.cover) " · 대표 사진" else "")
                 )
             }
         }

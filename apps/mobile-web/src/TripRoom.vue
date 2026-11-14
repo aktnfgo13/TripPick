@@ -68,6 +68,7 @@ async function refresh() {
   }
 }
 async function act(fn: () => Promise<unknown>) {
+  if (working.value) return;
   working.value = true;
   try {
     await fn();
@@ -160,9 +161,9 @@ onUnmounted(() => {
       title="여행 지도와 장소 편집"
       style="width: 100%; height: 70vh; border: 0"
     ></iframe>
-    <OwnerRecovery v-if="trip.role === 'owner'" :owner-trip="id" />
+
     <UploadPanel v-if="trip.state === 'ACTIVE'" :trip="id" @done="refresh" />
-    <h2>여행 사진</h2>
+    <h2>여행 사진 · {{ photos.length }}장</h2>
     <label><input type="checkbox" v-model="mine" /> 내 업로드만</label>
     <p v-if="!visible.length">아직 사진이 없습니다.</p>
     <div class="grid">
@@ -199,7 +200,7 @@ onUnmounted(() => {
         <img loading="lazy" :src="media(pid, 'preview')" alt="앨범 사진" /><span
           v-if="pid === album?.coverPhotoId"
           >대표 사진 · </span
-        ><a :href="media(pid, 'download')" download>다운로드</a>
+        ><a :href="media(pid, 'download')" download>원본 다운로드</a>
       </article>
     </div>
     <button v-if="trip.role === 'owner' && !editing" @click="edit">
@@ -230,6 +231,7 @@ onUnmounted(() => {
         앨범 확정</button
       ><button @click="editing = false">취소</button>
     </section>
+    <OwnerRecovery v-if="trip.role === 'owner'" :owner-trip="id" />
   </template>
   <p v-else-if="!error">여행을 불러오는 중…</p>
 </template>
