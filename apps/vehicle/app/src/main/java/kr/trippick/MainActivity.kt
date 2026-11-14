@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 if (!travel.recording) navStatus = "자동 기록 꺼짐"
                 onDispose { runCatching { navigation?.close() } }
             }
-            MaterialTheme {
+            MaterialTheme(colors = lightColors(primary = androidx.compose.ui.graphics.Color(0xff165b50), secondary = androidx.compose.ui.graphics.Color(0xff316968))) {
                 if (allowed) VehicleRoom(travel, navStatus)
                 else Box(Modifier.padding(32.dp)) { Text("TripPick · 주차 및 화면 사용 허용 상태를 기다립니다.") }
             }
@@ -97,7 +97,7 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
             delay(4000)
         }
     }
-    if (mapOpen && model.trip.isNotEmpty()) {
+    if (mapOpen) {
         JournalMap(model) { openMap(false) }
         return
     }
@@ -127,6 +127,7 @@ fun VehicleRoom(model: TravelModel, navStatus: String) {
         Box(Modifier.height(4.dp)) { if (model.busy) LinearProgressIndicator() }
         if (model.trip.isBlank() || creating) {
             Text("TripPick", style = MaterialTheme.typography.h4)
+            TextButton(onClick = { openMap(true) }) { Text("전국 지도 둘러보기") }
             Text("새 여행 시작", style = MaterialTheme.typography.h6)
             OutlinedTextField(name, { name = it }, label = { Text("여행 제목") }, singleLine = true)
             Button(

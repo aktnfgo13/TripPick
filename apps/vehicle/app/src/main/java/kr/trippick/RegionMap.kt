@@ -103,10 +103,10 @@ internal fun Geography(
             }
             drawPath(
                 path,
-                if (places.any { it.region == r.code }) Color(0xff8ebda3) else Color(0xffdbe3da),
+                if (places.any { it.region == r.code && it.state in listOf("ARRIVED", "CONFIRMED") }) Color(0xff8ebda3) else Color(0xffdbe3da),
             )
             drawPath(path, Color.DarkGray, style = Stroke(1f))
         }
-        for (v in pins) drawCircle(Color(0xffa53d21), 8.dp.toPx(), project(v.point!!))
+        for (v in pins) drawCircle(if (v.state == "CANDIDATE") Color(0xff806018) else Color(0xff165b50), 8.dp.toPx(), project(v.point!!))
     }
 }

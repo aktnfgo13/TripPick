@@ -142,4 +142,13 @@ button:disabled { opacity:.6 } button:active { background:#d2e6df }
 label { display:inline-block; max-width:100% } input { max-width:100% }
 h1,h2,p,li { overflow-wrap:anywhere } .grid a { display:inline-flex; align-items:center; color:#085648 }
 @media(max-width:480px){main{padding:.75rem}section,article,form{padding:.75rem}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+main { line-height:1.55 }
+h1,h2 { line-height:1.25; letter-spacing:-.035em }
+h1 { font-size:clamp(1.65rem,5vw,2.4rem) }
+main > section, main > form { border:1px solid #ceded8; padding:clamp(1rem,3vw,2rem) }
+main > section > form, main > form { display:grid; gap:.8rem }
+main > form label, main > section > form label { display:grid; gap:.35rem; font-weight:600 }
+input:not([type=checkbox]):not([type=radio]) { border:1px solid #728980; border-radius:8px }
+:focus-visible { outline:3px solid #236bc2; outline-offset:3px }
+[role=alert] { padding:.75rem 1rem; border-left:4px solid #963b22; background:#fff3ec; color:#74290f }
 </style>

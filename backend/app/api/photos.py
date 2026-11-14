@@ -63,7 +63,10 @@ def media(trip: str, photo: str, kind: str, req: Request, db=Depends(connection)
     if not row or kind not in ("preview", "download"):
         fail(404, "사진 없음")
     headers = {
-        "Cache-Control": "private, no-store",
+        "Cache-Control": (
+            "private, max-age=86400" if kind == "preview" and who["vehicle"] else "private, no-store"
+        ),
+        "Vary": "Authorization, Cookie",
         "X-Content-Type-Options": "nosniff",
     }
     if kind == "download":

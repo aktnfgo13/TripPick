@@ -1,6 +1,10 @@
 package kr.trippick
 
+import android.content.Context
+import org.json.JSONObject
 import org.json.JSONArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class Point(val x: Double, val y: Double)
 
@@ -49,33 +53,32 @@ class JournalData(private val api: VehicleApi = VehicleApi()) {
         )
     }
 
-    private var regions: List<Region>? = null
+    suspend fun bundled(context: Context): List<Region> = withContext(Dispatchers.IO) {
+        fun asset(name: String) = context.assets.open(name).bufferedReader().use { JSONObject(it.readText()) }
+        val features = asset("korea.geojson").getJSONArray("features")
+        val changes = asset("catalog.json").getJSONArray("changes")
+        fun region(properties: JSONObject, geometry: JSONObject): Region {
+            val coordinates = geometry.getJSONArray("coordinates")
+            val polygons = if (geometry.getString("type") == "Polygon") rings(coordinates)
+                else (0 until coordinates.length()).flatMap { rings(coordinates.getJSONArray(it)) }
+            val old = properties.optJSONArray("predecessors")
+            return Region(properties.getString("code"), properties.getString("name"), polygons,
+                old?.let { (0 until it.length()).map(it::getString) }.orEmpty())
+        }
+        val replacements = (0 until changes.length()).map {
+            val change = changes.getJSONObject(it)
+            region(change, asset(change.getString("geometry")))
+        }
+        val retired = replacements.flatMap { it.predecessors }.toSet()
+        (0 until features.length()).map {
+            val feature = features.getJSONObject(it)
+            region(feature.getJSONObject("properties"), feature.getJSONObject("geometry"))
+        }.filter { it.code !in retired }.plus(replacements).sortedBy { it.code }
+    }
 
-    suspend fun load(trip: String, token: String): Journal {
-        val shapes =
-            regions
-                ?: run {
-                    val features = api.request("/regions").getJSONArray("features")
-                    (0 until features.length())
-                        .map { i ->
-                            val f = features.getJSONObject(i)
-                            val p = f.getJSONObject("properties")
-                            val g = f.getJSONObject("geometry")
-                            val coordinates = g.getJSONArray("coordinates")
-                            Region(
-                                p.getString("code"),
-                                p.getString("name"),
-                                if (g.getString("type") == "Polygon") rings(coordinates)
-                                else
-                                    (0 until coordinates.length()).flatMap {
-                                        rings(coordinates.getJSONArray(it))
-                                    },
-                                p.optJSONArray("predecessors")?.let { a -> (0 until a.length()).map(a::getString) }.orEmpty(),
-                            )
-                        }
-                        .also { regions = it }
-                }
-        val data = api.request("/trips/" + trip + "/journal", token)
+    suspend fun fetch(trip: String, token: String) = api.request("/trips/" + trip + "/journal", token)
+
+    fun journal(shapes: List<Region>, data: JSONObject): Journal {
         val visits = data.getJSONArray("visits")
         val stops =
             (0 until visits.length())
@@ -85,7 +88,7 @@ class JournalData(private val api: VehicleApi = VehicleApi()) {
                         v.getString("id"),
                         v.getString("place_id"),
                         v.getString("name"),
-                        v.optString("region_code"),
+                        shapes.firstOrNull { v.optString("region_code") in it.predecessors }?.code ?: v.optString("region_code"),
                         if (v.isNull("latitude")) null
                         else Point(v.getDouble("longitude") * .8, -v.getDouble("latitude")),
                         v.getString("observed_at"),

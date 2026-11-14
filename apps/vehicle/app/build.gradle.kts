@@ -5,6 +5,7 @@ plugins {
 
 val withPleosSdk = providers.gradleProperty("withPleosSdk").orNull == "true"
 android {
+    sourceSets["main"].assets.srcDir("../../../assets/maps")
     useLibrary("android.car", false)
     sourceSets["main"].java.srcDir(if (withPleosSdk) "src/pleos/java" else "src/base/java")
     if (withPleosSdk) sourceSets["debug"].manifest.srcFile("src/pleosDebug/AndroidManifest.xml")

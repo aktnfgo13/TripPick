@@ -6,7 +6,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
+import androidx.compose.material.Text
+import androidx.compose.foundation.layout.Box
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
@@ -30,7 +32,10 @@ fun InviteQr(url: String, modifier: Modifier) {
 fun Preview(model: TravelModel, id: String, modifier: Modifier) {
     val context = LocalContext.current
     val request =
-        remember(id, model.trip) {
+        remember(id, model.trip, model.token) {
+            val key = java.security.MessageDigest.getInstance("SHA-256").digest(
+                (BuildConfig.API_ORIGIN + "/" + model.trip + "/" + id + "/" + model.token).toByteArray()
+            ).joinToString("") { "%02x".format(it) }
             ImageRequest.Builder(context)
                 .data(
                     BuildConfig.API_ORIGIN +
@@ -42,8 +47,11 @@ fun Preview(model: TravelModel, id: String, modifier: Modifier) {
                 )
                 .addHeader("Authorization", "Bearer " + model.token)
                 .size(640)
-                .diskCachePolicy(coil.request.CachePolicy.DISABLED)
+                .diskCacheKey(key)
+                .memoryCacheKey(key)
                 .build()
         }
-    AsyncImage(request, "여행 사진", modifier)
+    SubcomposeAsyncImage(request, "여행 사진", modifier, error = {
+        Box { Text("사진을 불러올 수 없음") }
+    })
 }

@@ -20,10 +20,14 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun JournalMap(model: TravelModel, back: () -> Unit) {
-    val cache = LocalContext.current.getSharedPreferences("journal-view", 0)
+    val context = LocalContext.current
+    val cache = context.getSharedPreferences("journal-view", 0)
     val trip = model.trip
     val repository = remember { JournalData() }
-    var data by remember { mutableStateOf<Journal?>(null) }
+    val credential = model.token
+    var sync by remember(trip, credential) { mutableStateOf("기본 지도") }
+    var online by remember(trip, credential) { mutableStateOf(false) }
+    var data by remember(trip, credential) { mutableStateOf<Journal?>(null) }
     var error by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     var albumOpen by rememberSaveable(trip) { mutableStateOf(false) }
@@ -44,16 +48,53 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
         albumOpen = false
         cache.edit().putString("place/" + trip, id).apply()
     }
-    LaunchedEffect(trip, refresh) {
-        runCatching { repository.load(trip, model.token) }
-            .onSuccess {
-                val route = it.restoreRoute(region, place)
-                if (route.first != region) chooseRegion(route.first)
-                if (route.second != place) choosePlace(route.second)
-                data = it
-                error = ""
+    androidx.activity.compose.BackHandler {
+        when {
+            place.isNotEmpty() -> choosePlace("")
+            region.isNotEmpty() -> chooseRegion("")
+            else -> back()
+        }
+    }
+    LaunchedEffect(trip, credential, refresh) {
+        val shapes = runCatching { repository.bundled(context) }.getOrElse {
+            error = "앱의 지도 파일을 열 수 없습니다."
+            return@LaunchedEffect
+        }
+        val base = Journal(shapes, emptyList(), emptyMap())
+        data = base
+        region = base.restoreRoute(region, "").first
+        if (trip.isBlank() || credential.isBlank()) return@LaunchedEffect
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+            .digest((BuildConfig.API_ORIGIN + "/" + trip + "/" + credential).toByteArray())
+        val snapshot = "snapshot/" + android.util.Base64.encodeToString(digest, android.util.Base64.NO_WRAP)
+        val cached = cache.getString(snapshot, null)?.let {
+            runCatching { repository.journal(shapes, org.json.JSONObject(it)) }.getOrNull()
+        }
+        data = cached ?: base
+        online = false
+        error = ""
+        sync = if (cached == null) "방문 기록 동기화 중" else "저장된 기록 · 동기화 중"
+        try {
+            val response = repository.fetch(trip, credential)
+            val journal = repository.journal(shapes, response)
+            cache.edit().putString(snapshot, response.toString()).apply()
+            data = journal
+            val route = journal.restoreRoute(region, place)
+            if (route.second != place) choosePlace(route.second)
+            sync = "방문 기록 · 동기화 완료"
+            online = true
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is VehicleResponseError && e.status in listOf(401, 403, 404)) {
+                cache.edit().remove(snapshot).apply()
+                data = base
+                sync = "여행 접근 권한을 확인하세요"
+            } else {
+                val reason = if (e is java.io.IOException) "오프라인" else "동기화 실패"
+                sync = reason + if (cached == null) " · 저장된 방문 기록 없음" else " · 마지막 저장 기록"
             }
-            .onFailure { error = it.message ?: "지도 조회 실패" }
+        }
     }
     Column(Modifier.fillMaxSize().padding(8.dp).verticalScroll(rememberScrollState())) {
         FlowRow {
@@ -61,22 +102,32 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
             TextButton(onClick = { chooseRegion("") }) { Text("전국 지도") }
             TextButton(onClick = { refresh++ }) { Text("지도 새로고침") }
         }
+        Text(sync, style = MaterialTheme.typography.subtitle1)
         if (error.isNotEmpty()) Text(error)
         val journal = data
         if (journal == null) {
-            Text("지도 불러오는 중")
+            if (error.isEmpty()) Text("지도 불러오는 중")
             return@Column
         }
-        val places = journal.stops.distinctBy { it.place }
+        val places = journal.stops.sortedBy { it.state == "CANDIDATE" }.distinctBy { it.place }
         val selected = journal.regions.firstOrNull { it.code == region }
         Text(selected?.name ?: "대한민국", style = MaterialTheme.typography.h6)
-        if (selected != null) Text("방문 장소 " + places.count { it.region == region } + "곳")
-        // Region selectors stay above the map so all regions are accessible in a small window.
+        if (selected != null && (online || journal.stops.isNotEmpty())) Text("방문 확인 " + places.count { it.region == region && it.state in listOf("CONFIRMED", "ARRIVED") } + "곳 · 후보 " + places.count { it.region == region && it.state == "CANDIDATE" } + "곳")
+        key(region) {
+            Geography(
+                selected?.let { listOf(it) } ?: journal.regions,
+                places,
+                selected != null,
+                ::chooseRegion,
+                ::choosePlace,
+            )
+        }
+
         if (selected == null)
             FlowRow {
                 journal.regions.forEach { r ->
                     TextButton(onClick = { chooseRegion(r.code) }) {
-                        Text(r.name + " " + places.count { it.region == r.code })
+                        Text(r.name + if (online || journal.stops.isNotEmpty()) " " + places.count { it.region == r.code && it.state in listOf("CONFIRMED", "ARRIVED") } else "")
                     }
                 }
             }
@@ -85,7 +136,7 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
                 places
                     .filter { it.region == region }
                     .forEach { v ->
-                        TextButton(onClick = { choosePlace(v.place) }) { Text(v.name) }
+                        TextButton(onClick = { choosePlace(v.place) }) { Text(v.name + if (v.state == "CANDIDATE") " · 후보" else "") }
                     }
             }
         val visits = journal.stops.filter { it.place == place }
@@ -125,7 +176,7 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
                         .onFailure { error = it.message ?: "수정 실패" }
                 }
             }
-            if (model.role == "owner") {
+            if (online && model.role == "owner") {
                 FlowRow {
                     TextButton(onClick = { editName = visits.first().name }) { Text("장소 수정") }
                     TextButton(onClick = { edit("EXCLUDED") }) { Text("이번 방문 제외") }
@@ -156,15 +207,6 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
                 )
             }
         }
-        key(region) {
-            Geography(
-                selected?.let { listOf(it) } ?: journal.regions,
-                places,
-                selected != null,
-                ::chooseRegion,
-                ::choosePlace,
-            )
-        }
-        Text("geoBoundaries · Natural Earth · 2021", style = MaterialTheme.typography.caption)
+        Text("2021 행정경계 · geoBoundaries CC BY 4.0 · Natural Earth PD", style = MaterialTheme.typography.caption)
     }
 }
