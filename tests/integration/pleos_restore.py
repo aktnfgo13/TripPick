@@ -7,7 +7,18 @@ from pleos_album import PACKAGE, adb, find, qr, tap, tree
 
 
 def launch():
-    adb("shell", "am", "start", "-W", "-n", PACKAGE + "/kr.trippick.MainActivity")
+    adb(
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-a",
+        "android.intent.action.MAIN",
+        "-c",
+        "android.intent.category.LAUNCHER",
+        "-n",
+        PACKAGE + "/kr.trippick.MainActivity",
+    )
 
 
 def check_restriction(page):
@@ -36,6 +47,8 @@ def run():
     if any(n.get("text") == "지도 닫기" for n in tree().iter("node")):
         tap("지도 닫기")
     trip_label = find("여행 ID ", exact=False).get("text")
+    if any(n.get("text") == "목록" for n in tree().iter("node")):
+        tap("목록")
     first = find(" · 좋아요 1", exact=False).get("text")
     tap(first)
     find("좋아요 취소 1")
@@ -51,7 +64,13 @@ def run():
         time.sleep(1)
     else:
         raise RuntimeError("Automotive user did not boot")
-    launch()
+    # Automotive HOME may take focus after sys.boot_completed during user startup.
+    # Re-open only when the app is absent. A wrong trip in a visible app must fail.
+    for _ in range(6):
+        launch()
+        time.sleep(2)
+        if any(n.get("package") == PACKAGE for n in tree().iter("node")):
+            break
     find(trip_label)
     find("좋아요 취소 1")
     tap("목록")

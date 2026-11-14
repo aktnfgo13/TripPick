@@ -83,6 +83,15 @@ def capture(name):
         (target / (name + ".png")).write_bytes(screen())
 
 
+def fill_trip_title(name):
+    tap("android.widget.EditText", "class")
+    input_event("keycombination", "KEYCODE_CTRL_LEFT", "KEYCODE_A")
+    input_event("keyevent", "KEYCODE_DEL")
+    input_event("text", name)
+    input_event("keyevent", "KEYCODE_BACK")
+    assert find("android.widget.EditText", "class").get("text") == name
+
+
 def qr(label):
     tap(label)
     find("QR 닫기")
@@ -115,9 +124,7 @@ def run():
         tap("새 여행")
     find("여행 생성")
     capture("create")
-    tap("android.widget.EditText", "class")
-    input_event("text", name)
-    input_event("keyevent", "KEYCODE_BACK")
+    fill_trip_title(name)
     tap("여행 생성")
     time.sleep(2)
     invite = qr("참여 QR")

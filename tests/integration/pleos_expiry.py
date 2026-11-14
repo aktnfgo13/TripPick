@@ -8,7 +8,7 @@ from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
 
 from playwright.sync_api import sync_playwright
-from pleos_album import find, input_event, qr, tap, tree
+from pleos_album import fill_trip_title, find, qr, tap, tree
 
 
 def check_reconnect(trip):
@@ -56,9 +56,7 @@ def run():
     name = "Expiry" + uuid4().hex
     if any(n.get("text") == "새 여행" for n in tree().iter("node")):
         tap("새 여행")
-    tap("android.widget.EditText", "class")
-    input_event("text", name)
-    input_event("keyevent", "KEYCODE_BACK")
+    fill_trip_title(name)
     tap("여행 생성")
     find(name, exact=False)
     trip = find("여행 ID ", exact=False).get("text").split()[-1]
