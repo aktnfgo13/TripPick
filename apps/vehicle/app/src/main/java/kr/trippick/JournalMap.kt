@@ -70,7 +70,7 @@ fun JournalMap(model: TravelModel, back: () -> Unit) {
         val places = journal.stops.distinctBy { it.place }
         val selected = journal.regions.firstOrNull { it.code == region }
         Text(selected?.name ?: "대한민국", style = MaterialTheme.typography.h6)
-        // Region selectors stay above the map so all 17 are accessible in a small window.
+        // Region selectors stay above the map so all regions are accessible in a small window.
         if (selected == null)
             FlowRow {
                 journal.regions.forEach { r ->

@@ -57,3 +57,5 @@ T는 /api/v1/trips/{trip}이다. 복구·변경 요청은 기존 동일 출처 �
 |PUT T/photos/{id}/place|관리자 또는 업로더. {visitId}로 연결 확인·변경. null이면 해제. 다른 여행의 방문은 422|
 
 복구 코드는 소지자 증명이다. 보관하지 않은 코드나 유출된 코드의 원래 소유자를 이메일로 식별할 수 없다. 기존 관리자 쿠키가 살아 있는 동안에 미리 발급해야 한다. 환경변수 TRIPPICK_RECOVERY_ENABLED=0은 발급·복구 엔드포인트만 비활성화한다. 일반 초대 QR에는 복구 정보가 들어가지 않는다.
+
+Phase 3.6부터 GET /api/v1/regions의 FeatureCollection에는 effectiveFrom, boundaryVersion과 변경 지역의 predecessors·aliases가 포함된다. GET T/journal의 visits[].region_code는 현재 지도용 코드이며 stored_region_code는 저장된 원래 값이다. 행정구역 갯수는 응답 features 기준이다. 기존 사진·방문 ID와 링크는 유지된다.

@@ -63,3 +63,7 @@ docs/requirements.md, architecture.md, database.md, api.md는 목표 상태와 �
 ## Phase 3.5 기준점
 
 최종 로컬 테스트 APK의 재부팅·앨범·지도·주행 제한 결과, 전용 AVD에서의 재현 방법과 화면 캡처는 [Phase 3.5 검증 보고서](docs/phase3_5-validation.md)에 있다.
+
+## Phase 3.6
+
+[DISPLAY2 재현 및 지도 검증](docs/phase3_6-validation.md). 이 단계의 SDK APK는 기존 테스트 환경과 분리해 차량 API 포트 18082, 웹 QR 포트 19445를 사용한다. 서버와 웹의 실행 방식은 위와 같으며 기존 테스트 APK를 계속 사용할 때는 해당 버전의 포트를 사용한다. 모바일·차량은 2026-07-01 기준 지역 카탈로그와 2021년 기반 표시 도형을 사용한다.
